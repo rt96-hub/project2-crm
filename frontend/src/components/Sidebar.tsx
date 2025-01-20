@@ -28,7 +28,7 @@ export function Sidebar() {
         'text-xl font-bold'
       }`}>
         <span className={isPowerMode ? 'inline-block' : ''}>
-          {isPowerMode ? '🤡 MadTable 🎭' : 'CRM Dashboard'}
+          {isPowerMode ? '🤡 MadTable 🎭' : 'MadTable'}
         </span>
       </div>
       <nav className="flex-grow">
