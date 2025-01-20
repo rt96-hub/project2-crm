@@ -18,7 +18,7 @@ export function Login() {
         password,
       })
       if (error) throw error
-      navigate('/welcome')
+      navigate('/dashboard')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
@@ -35,7 +35,7 @@ export function Login() {
         password,
       })
       if (error) throw error
-      navigate('/welcome')
+      navigate('/dashboard')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
