@@ -2,11 +2,13 @@ import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { ProfilePopout } from './ProfilePopout'
 import { useTheme } from '../context/ThemeContext'
+import { useUser } from '../context/UserContext'
 
 export function Sidebar() {
   const location = useLocation()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const { isPowerMode } = useTheme()
+  const { profile } = useUser()
   
   const navItems = [
     { path: '/dashboard', label: 'Home', icon: isPowerMode ? '🤪' : '🏠' },
@@ -14,6 +16,9 @@ export function Sidebar() {
     { path: '/customers', label: 'Customers', icon: isPowerMode ? '🤖' : '👥' },
     { path: '/knowledge-base', label: 'Knowledge Base', icon: isPowerMode ? '🎪' : '📚' },
     { path: '/reporting', label: 'Reporting', icon: isPowerMode ? '🌈' : '📊' },
+    ...(profile?.is_admin ? [
+      { path: '/admin', label: 'Admin', icon: isPowerMode ? '👑' : '⚙️' }
+    ] : [])
   ]
 
   return (
