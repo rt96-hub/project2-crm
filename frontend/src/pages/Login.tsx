@@ -81,7 +81,8 @@ export function Login() {
         <form className={`mt-8 space-y-6 ${isPowerMode ? 
           'bg-electric-purple p-8 rounded-lg transform rotate-2 shadow-[0_0_30px_10px_#FF69B4]' :
           ''
-        }`}>
+        }`}
+        data-testid="login-form">
           {error && (
             <div className={`rounded-md p-4 ${isPowerMode ? 
               'bg-eye-burn-orange animate-pulse' :

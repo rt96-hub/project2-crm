@@ -57,7 +57,16 @@ export function ProfilePopout({ isOpen, onClose }: ProfilePopoutProps) {
   ]
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div 
+      role="dialog" 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={(e) => {
+        // Only close if clicking the backdrop (not the modal content)
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
       <div className={`w-[480px] rounded-lg shadow-lg p-6 ${
         isPowerMode ?
         'bg-electric-purple border-4 border-hot-pink animate-wiggle' :
@@ -92,6 +101,7 @@ export function ProfilePopout({ isOpen, onClose }: ProfilePopoutProps) {
                       name="first_name"
                       value={formData.first_name}
                       onChange={handleInputChange}
+                      aria-label="first name"
                       className="w-full bg-gray-600 text-white px-3 py-2 rounded mt-1"
                     />
                   </div>
@@ -103,6 +113,7 @@ export function ProfilePopout({ isOpen, onClose }: ProfilePopoutProps) {
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleInputChange}
+                      aria-label="last name"
                       className="w-full bg-gray-600 text-white px-3 py-2 rounded mt-1"
                     />
                   </div>
@@ -114,6 +125,7 @@ export function ProfilePopout({ isOpen, onClose }: ProfilePopoutProps) {
                       name="work_phone"
                       value={formData.work_phone}
                       onChange={handleInputChange}
+                      aria-label="phone number"
                       className="w-full bg-gray-600 text-white px-3 py-2 rounded mt-1"
                     />
                   </div>
@@ -125,6 +137,7 @@ export function ProfilePopout({ isOpen, onClose }: ProfilePopoutProps) {
                       name="job_title"
                       value={formData.job_title}
                       onChange={handleInputChange}
+                      aria-label="job title"
                       className="w-full bg-gray-600 text-white px-3 py-2 rounded mt-1"
                     />
                   </div>
