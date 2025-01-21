@@ -23,11 +23,19 @@ type Filters = {
   due_date: string
 }
 
+type ProfileInfo = {
+  user_id: string
+  first_name: string | null
+  last_name: string | null
+}
+
 export function TicketTable({ tickets }: TicketTableProps) {
   const navigate = useNavigate()
   const { isPowerMode } = useTheme()
   const [statuses, setStatuses] = useState<Record<string, string>>({})
   const [priorities, setPriorities] = useState<Record<string, string>>({})
+  const [creators, setCreators] = useState<Record<string, ProfileInfo>>({})
+  const [assignees, setAssignees] = useState<Record<string, ProfileInfo[]>>({})
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: '', direction: 'asc' })
   const [openDropdown, setOpenDropdown] = useState<'status' | 'priority' | null>(null)
   const [filters, setFilters] = useState<Filters>({
@@ -65,10 +73,70 @@ export function TicketTable({ tickets }: TicketTableProps) {
         }), {} as Record<string, string>)
         setPriorities(priorityMap)
       }
+
+      // Fetch creators
+      const creatorIds = [...new Set(tickets.map(t => t.creator_id))]
+      if (creatorIds.length > 0) {
+        const { data: creatorData } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', creatorIds)
+
+        if (creatorData) {
+          const creatorMap = creatorData.reduce((acc, profile) => ({
+            ...acc,
+            [profile.user_id]: profile
+          }), {} as Record<string, ProfileInfo>)
+          setCreators(creatorMap)
+        }
+      }
+
+      // Fetch assignees
+      const ticketIds = tickets.map(t => t.id)
+      if (ticketIds.length > 0) {
+        // First get all assignments
+        const { data: assignmentData } = await supabase
+          .from('ticket_assignments')
+          .select('ticket_id, profile_id')
+          .in('ticket_id', ticketIds)
+
+        if (assignmentData && assignmentData.length > 0) {
+          // Get unique profile IDs
+          const profileIds = [...new Set(assignmentData.map(a => a.profile_id))]
+          
+          // Fetch profiles for these IDs
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', profileIds)
+
+          if (profileData) {
+            // Create a map of profiles by user_id for quick lookup
+            const profileMap = profileData.reduce((acc, profile) => ({
+              ...acc,
+              [profile.user_id]: profile
+            }), {} as Record<string, ProfileInfo>)
+
+            // Create the assignee map using the profile map
+            const assigneeMap = assignmentData.reduce((acc, assignment) => {
+              const profile = profileMap[assignment.profile_id]
+              if (!profile) return acc
+              
+              if (!acc[assignment.ticket_id]) {
+                acc[assignment.ticket_id] = []
+              }
+              acc[assignment.ticket_id].push(profile)
+              return acc
+            }, {} as Record<string, ProfileInfo[]>)
+            
+            setAssignees(assigneeMap)
+          }
+        }
+      }
     }
 
     fetchOptions()
-  }, [])
+  }, [tickets])
 
   // Add click outside handler to close dropdowns
   useEffect(() => {
@@ -150,6 +218,24 @@ export function TicketTable({ tickets }: TicketTableProps) {
     return sortConfig.direction === 'asc' ? '↑' : '↓'
   }
 
+  const getCreatorName = (creatorId: string) => {
+    const creator = creators[creatorId]
+    if (!creator) return 'Loading...'
+    return [creator.first_name, creator.last_name].filter(Boolean).join(' ') || 'Unknown'
+  }
+
+  const getAssigneesDisplay = (ticketId: string) => {
+    const ticketAssignees = assignees[ticketId] || []
+    if (ticketAssignees.length === 0) return 'None'
+    if (ticketAssignees.length === 1) {
+      const assignee = ticketAssignees[0]
+      return [assignee.first_name, assignee.last_name].filter(Boolean).join(' ') || 'Unknown'
+    }
+    const firstAssignee = ticketAssignees[0]
+    const firstAssigneeName = [firstAssignee.first_name, firstAssignee.last_name].filter(Boolean).join(' ') || 'Unknown'
+    return `${firstAssigneeName} +${ticketAssignees.length - 1}`
+  }
+
   return (
     <div className={`overflow-x-auto ${isPowerMode ? 'font-comic' : ''}`}>
       <table className={`min-w-full table-auto ${
@@ -172,6 +258,8 @@ export function TicketTable({ tickets }: TicketTableProps) {
                 }`}
               />
             </th>
+            <th className="px-6 py-2">Creator</th>
+            <th className="px-6 py-2">Assignees</th>
             <th className="px-6 py-2">
               <div className="relative filter-dropdown">
                 <button
@@ -276,6 +364,8 @@ export function TicketTable({ tickets }: TicketTableProps) {
             >
               Title {getSortIndicator('title')}
             </th>
+            <th className="px-6 py-3 text-left">Creator</th>
+            <th className="px-6 py-3 text-left">Assignees</th>
             <th 
               className="px-6 py-3 text-left cursor-pointer"
               onClick={() => handleSort('status_id')}
@@ -306,7 +396,7 @@ export function TicketTable({ tickets }: TicketTableProps) {
           {filteredAndSortedTickets.length === 0 ? (
             <tr>
               <td 
-                colSpan={5} 
+                colSpan={7} 
                 className={`px-6 py-8 text-center ${
                   isPowerMode ? 
                   'text-toxic-yellow font-comic animate-pulse' : 
@@ -328,6 +418,8 @@ export function TicketTable({ tickets }: TicketTableProps) {
                 }`}
               >
                 <td className="px-6 py-4 border-b">{ticket.title}</td>
+                <td className="px-6 py-4 border-b">{getCreatorName(ticket.creator_id)}</td>
+                <td className="px-6 py-4 border-b">{getAssigneesDisplay(ticket.id)}</td>
                 <td className="px-6 py-4 border-b">{statuses[ticket.status_id] || 'Loading...'}</td>
                 <td className="px-6 py-4 border-b">{priorities[ticket.priority_id] || 'Loading...'}</td>
                 <td className="px-6 py-4 border-b">

@@ -20,17 +20,20 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
     status_id: string
     priority_id: string
     due_date: string
+    assigned_to_id: string
   }>({
     title: '',
     description: '',
     status_id: '',
     priority_id: '',
     due_date: '',
+    assigned_to_id: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [statuses, setStatuses] = useState<Tables<'statuses'>[]>([])
   const [priorities, setPriorities] = useState<Tables<'priorities'>[]>([])
+  const [profiles, setProfiles] = useState<Tables<'profiles'>[]>([])
 
   useEffect(() => {
     async function fetchOptions() {
@@ -53,6 +56,14 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
       if (priorityData) {
         setPriorities(priorityData)
       }
+
+      // Fetch active profiles
+      const { data: profileData } = await supabase
+        .rpc('get_all_active_profiles')
+
+      if (profileData) {
+        setProfiles(profileData)
+      }
     }
 
     if (isOpen) {
@@ -68,18 +79,42 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
     setError(null)
 
     const ticketData: TablesInsert<'tickets'> = {
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      status_id: formData.status_id,
+      priority_id: formData.priority_id,
+      due_date: formData.due_date || null,
       creator_id: profile.user_id,
     }
 
-    const { error: createError } = await supabase
+    // Create ticket
+    const { data: ticketResult, error: createError } = await supabase
       .from('tickets')
       .insert(ticketData)
+      .select()
+      .single()
+
+    if (createError) {
+      setLoading(false)
+      setError(createError.message)
+      return
+    }
+
+    // Create ticket assignment
+    const assignmentData: TablesInsert<'ticket_assignments'> = {
+      ticket_id: ticketResult.id,
+      profile_id: formData.assigned_to_id || profile.user_id, // Default to creator if no assignment
+      assignment_type: 'standard' // should probably be another table and this becomes a dropdown with the fk relationship
+    }
+
+    const { error: assignmentError } = await supabase
+      .from('ticket_assignments')
+      .insert(assignmentData)
 
     setLoading(false)
 
-    if (createError) {
-      setError(createError.message)
+    if (assignmentError) {
+      setError(assignmentError.message)
     } else {
       onTicketCreated()
       onClose()
@@ -89,6 +124,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
         status_id: '',
         priority_id: '',
         due_date: '',
+        assigned_to_id: '',
       })
     }
   }
@@ -231,6 +267,31 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
                 'border border-gray-300'
               }`}
             />
+          </div>
+
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
+            }`}>
+              Assign To
+            </label>
+            <select
+              name="assigned_to_id"
+              value={formData.assigned_to_id}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 rounded ${
+                isPowerMode ?
+                'bg-neon-green text-eye-burn-orange font-comic border-2 border-hot-pink' :
+                'border border-gray-300'
+              }`}
+            >
+              <option value="">Assign to me</option>
+              {profiles.map(user => (
+                <option key={user.user_id} value={user.user_id}>
+                  {user.first_name} {user.last_name} ({user.email})
+                </option>
+              ))}
+            </select>
           </div>
 
           {error && (

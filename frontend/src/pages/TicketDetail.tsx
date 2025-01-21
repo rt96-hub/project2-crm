@@ -5,6 +5,12 @@ import { Tables } from '../types/database.types'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
+type ProfileInfo = {
+  user_id: string
+  first_name: string | null
+  last_name: string | null
+}
+
 export function TicketDetail() {
   const { id } = useParams<{ id: string }>()
   const { isPowerMode } = useTheme()
@@ -12,6 +18,9 @@ export function TicketDetail() {
   const [loading, setLoading] = useState(true)
   const [statuses, setStatuses] = useState<Record<string, string>>({})
   const [priorities, setPriorities] = useState<Record<string, string>>({})
+  const [creator, setCreator] = useState<ProfileInfo | null>(null)
+  const [assignees, setAssignees] = useState<ProfileInfo[]>([])
+  const [assignmentError, setAssignmentError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -28,6 +37,48 @@ export function TicketDetail() {
         console.error('Error fetching ticket:', ticketError)
       } else {
         setTicket(ticketData)
+
+        // Fetch creator info
+        const { data: creatorData } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .eq('user_id', ticketData.creator_id)
+          .single()
+
+        if (creatorData) {
+          setCreator(creatorData)
+        }
+
+        // Fetch assignees with debug info
+        console.log('Fetching assignees for ticket:', id)
+        const { data: assignmentData, error: assignmentError } = await supabase
+          .from('ticket_assignments')
+          .select('ticket_id, profile_id')
+          .eq('ticket_id', id)
+
+        console.log('Assignment data:', assignmentData)
+        console.log('Assignment error:', assignmentError)
+
+        if (assignmentError) {
+          setAssignmentError(assignmentError.message)
+        } else if (assignmentData && assignmentData.length > 0) {
+          // Get unique profile IDs
+          const profileIds = [...new Set(assignmentData.map(a => a.profile_id))]
+          
+          // Fetch profiles for these IDs
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', profileIds)
+
+          if (profileError) {
+            setAssignmentError(profileError.message)
+          } else if (profileData) {
+            setAssignees(profileData)
+          }
+        } else {
+          setAssignees([])
+        }
       }
 
       // Fetch statuses
@@ -84,6 +135,11 @@ export function TicketDetail() {
     )
   }
 
+  const getFullName = (profile: ProfileInfo | null) => {
+    if (!profile) return 'Unknown'
+    return [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown'
+  }
+
   const fields = [
     { label: 'Title', value: ticket.title },
     { label: 'Description', value: ticket.description || 'No description' },
@@ -92,9 +148,23 @@ export function TicketDetail() {
     { label: 'Created', value: new Date(ticket.created_at).toLocaleString() },
     { label: 'Updated', value: new Date(ticket.updated_at).toLocaleString() },
     { label: 'Due Date', value: ticket.due_date ? new Date(ticket.due_date).toLocaleString() : 'No due date' },
-    { label: 'Creator', value: ticket.creator_id },
+    { label: 'Creator', value: creator ? getFullName(creator) : 'Loading...' },
+    { 
+      label: 'Assignees', 
+      value: assignmentError ? 
+        `Error loading assignees: ${assignmentError}` : 
+        assignees.length > 0 ? 
+          assignees.map(a => getFullName(a)).join(', ') : 
+          'No assignees'
+    },
     { label: 'Organization', value: ticket.organization_id || 'No organization' },
     { label: 'Custom Fields', value: ticket.custom_fields ? JSON.stringify(ticket.custom_fields, null, 2) : 'No custom fields' },
+    { label: 'Debug Info', value: `
+      Assignee Count: ${assignees.length}
+      Assignment Error: ${assignmentError || 'None'}
+      Creator ID: ${ticket.creator_id}
+      Creator Profile: ${creator ? JSON.stringify(creator, null, 2) : 'Not loaded'}
+    ` }
   ]
 
   return (

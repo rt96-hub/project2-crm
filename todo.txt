@@ -1,23 +1,27 @@
-when creating an account, the user shouldnt be able to immediately login, this is different than the dev?
-also email redirects to localhost
+- fix later migrations around showing profiles of users who have created or been assigned to tickets
 
-create organization table
-create organization user table
+- when creating an account, the user shouldnt be able to immediately login, this is different than the dev?
 
-email invitation (admin can select an organization or internal and invite a user via email)
+- create organization table
+- create organization user table
 
-dont let admin user remove admin status from self or other admin users
-tests for new components, also remember to create new tests anytime we make a new component or update an existing one
+- email invitation (admin can select an organization or internal and invite a user via email)
 
-sorted attributes on status and priority dropdowns
-sortable on all tickets table columns
+- dont let admin user remove admin status from self or other admin users
+- tests for new components, also remember to create new tests anytime we make a new component or update an existing one
 
-ticket assignment at creation
-ticket table shows creator name and assignee name (or none or name+x if there are multiple)
-ticket select page needs general overhaul, but some kind of back button (close or otherwise)
-edits to tickets update ticket_history
-add a sidebar to the selected ticket page that shows the comment history, and other history
-suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
 
-seed tickets and assignees and history (probably create them in UI then back them up)
-SEED KNOWLEDGE BASE (what kind of company are we? maybe a clown supply company)
+x sorted attributes on status and priority dropdowns
+x sortable on all tickets table columns
+
+- remove timestamp from due date column either just on creation or out of database completely
+x ticket assignment at creation
+- ticket table shows creator name and assignee name (or none or name+x if there are multiple)
+- ticket select page needs general overhaul, but some kind of back button (close or otherwise)
+- edits to tickets update ticket_history
+- add a sidebar to the selected ticket page that shows the comment history, and other history
+- suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
+- assignment types, primary, secondary, watcher
+
+- seed tickets and assignees and history (probably create them in UI then back them up)
+- SEED KNOWLEDGE BASE (what kind of company are we? maybe a clown supply company)
