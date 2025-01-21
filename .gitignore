@@ -51,4 +51,4 @@ dist-ssr
 /documentation
 
 # Supabase
-supabase/seed.sql
+supabase/seeds/*

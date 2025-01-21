@@ -1,3 +1,11 @@
+when creating an account, the user shouldnt be able to immediately login, this is different than the dev?
+also email redirects to localhost
+
+create organization table
+create organization user table
+
+email invitation (admin can select an organization or internal and invite a user via email)
+
 dont let admin user remove admin status from self or other admin users
 tests for new components, also remember to create new tests anytime we make a new component or update an existing one
 
