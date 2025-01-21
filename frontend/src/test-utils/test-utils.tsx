@@ -11,7 +11,6 @@ export const createMockProfile = (overrides: Partial<Profile> = {}): Profile => 
   created_at: new Date().toISOString(),
   email: 'test@example.com',
   first_name: 'Test',
-  id: 1,
   is_active: true,
   is_admin: false,
   job_title: 'Tester',

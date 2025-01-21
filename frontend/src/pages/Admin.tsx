@@ -109,7 +109,7 @@ export function Admin() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {users.map((user) => (
-              <tr key={user.id} className={isPowerMode ? 'hover:bg-neon-green/10' : 'hover:bg-gray-50'}>
+              <tr key={user.user_id} className={isPowerMode ? 'hover:bg-neon-green/10' : 'hover:bg-gray-50'}>
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div>

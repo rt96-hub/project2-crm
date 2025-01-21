@@ -49,3 +49,6 @@ dist-ssr
 .env.*
 
 /documentation
+
+# Supabase
+supabase/seed.sql

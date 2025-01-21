@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Tickets } from './pages/Tickets'
+import { TicketDetail } from './pages/TicketDetail'
 import { Customers } from './pages/Customers'
 import { KnowledgeBase } from './pages/KnowledgeBase'
 import { Reporting } from './pages/Reporting'
@@ -21,6 +22,7 @@ function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tickets" element={<Tickets />} />
+              <Route path="/tickets/:id" element={<TicketDetail />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/knowledge-base" element={<KnowledgeBase />} />
               <Route path="/reporting" element={<Reporting />} />
