@@ -38,24 +38,50 @@ x in ticket activity and conversation sidebar, make the scroll bar start at the 
 - notifications in general (on sidebar?)
 - custom attributes on tickets, created in admin panel
 
-- create organization and organization_user tables, add is_customer bool to profile table
-- lock down data available to is_customer profiles
-- organization columns: name, description, customer_since, customer_type_id, customer_status_id, total_contract, default_priority_id, is_active
-- organization_user columns: organization_id, profile_id, name, email, job_title, phone_number
-- customer_type table: id, name (individual, small business, large business, etc)
-    - seed in migrations
-- customer_status table: id, name (in pipeline, under contract, cancelled, etc)
-    - seed in migrations
+x create organization and organization_user tables, add is_customer bool to profile table
+x is_customer bool defaults to false, and existing records set to false
+x organization columns: name, description, customer_since, customer_type_id, customer_status_id, total_contract, default_priority_id, is_active
+x organization_user columns: organization_id, profile_id
+x organization_type table: id, name
+    x seed in migrations - (individual, small business, large business, etc)
+x organization_status table: id, name
+    x seed in migrations - (in pipeline, under contract, cancelled, etc)
 
+- login as a customer
+    - build their sidebar
+        - dashboard
+        - tickets
+        - knowledge base
+        - help chat
+    
+
+- lock down data available to is_customer profiles
+- make organization_id be assigned to tickets
 
 - admin panel
-    - create statuses, types, attributes
+    - create ticket_statuses, priorities, organization_types, organization_statuses
+    - create attributes (later)
     - create organizations
     - invite users (to organizations or internal)
     - deactivate or make admin users
 - email invitation (admin can select an organization or internal and invite a user via email)
     - how to test?
     - additionally generate an invite code if they go directly to the signup page
+    - invite code is somehow parsed to tell the server what user is being invited
+    - prefill the names, job title, and phone number in invite form (not required though)
+    - basically seems like the same process as the signup page, but the admin kicks off the process instead of a signup
+    - password reset???
+
+- organization page (non customers can view, admins can edit)
+    - show all users in the organization
+    - show all tickets in the organization
+    - show all details about the organization
+        - name, description, customer_since, total_contract, default_priority, status, type
+    - admins have ability to edit details
+
+- when a ticket is created (maybe not from UI)
+    - priority is set to the default for the organization
+
 
 - default seed for organizations and organization_users (two orgs, one user in each)
 
