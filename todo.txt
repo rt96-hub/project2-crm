@@ -59,11 +59,21 @@ x organization_status table: id, name
 - make organization_id be assigned to tickets
 
 - admin panel
-    - create ticket_statuses, priorities, organization_types, organization_statuses
+    x create ticket_statuses, priorities, organization_types, organization_statuses
     - create attributes (later)
-    - create organizations
-    - invite users (to organizations or internal)
-    - deactivate or make admin users
+    x organization management page
+        x table that shows all organizations
+        x create organizations
+        x select organization from table to view details and edit them
+        - filter or sort organizations in table
+    x users panel button
+        - invite users (to organizations or internal)
+        x deactivate or make admin users
+        x edit user details
+        - edit customer organization
+        - cant disable admin on self
+        - cant enable admin on customers
+        - filter or sort users in table
 - email invitation (admin can select an organization or internal and invite a user via email)
     - how to test?
     - additionally generate an invite code if they go directly to the signup page
@@ -72,16 +82,25 @@ x organization_status table: id, name
     - basically seems like the same process as the signup page, but the admin kicks off the process instead of a signup
     - password reset???
 
+
 - organization page (non customers can view, admins can edit)
+    - table of all visible organizations if not a customer
+        - as a non customer, you can select any of the organization pages to view
+        - if a customer, navigate directly to the organization select page
     - show all users in the organization
     - show all tickets in the organization
     - show all details about the organization
         - name, description, customer_since, total_contract, default_priority, status, type
     - admins have ability to edit details
 
+- update rls for all the above (may need to strategize this with o1)
+
 - when a ticket is created (maybe not from UI)
     - priority is set to the default for the organization
+- non is_active statuses, priorities, etc should not be selectable
 
+- profiles page (other users can view details)
+    - open tickets, etc
 
 - default seed for organizations and organization_users (two orgs, one user in each)
 
