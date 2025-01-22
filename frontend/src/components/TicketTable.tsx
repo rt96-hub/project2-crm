@@ -29,6 +29,13 @@ type ProfileInfo = {
   last_name: string | null
 }
 
+type AssigneeData = {
+  ticket_id: string
+  assignee_id: string
+  first_name: string | null
+  last_name: string | null
+}
+
 export function TicketTable({ tickets }: TicketTableProps) {
   const navigate = useNavigate()
   const { isPowerMode } = useTheme()
@@ -91,46 +98,27 @@ export function TicketTable({ tickets }: TicketTableProps) {
         }
       }
 
-      // Fetch assignees
+      // Fetch assignees using the new function
       const ticketIds = tickets.map(t => t.id)
       if (ticketIds.length > 0) {
-        // First get all assignments
-        const { data: assignmentData } = await supabase
-          .from('ticket_assignments')
-          .select('ticket_id, profile_id')
-          .in('ticket_id', ticketIds)
+        const { data: assigneeData } = await supabase
+          .rpc('get_ticket_assignees', { ticket_ids: ticketIds })
 
-        if (assignmentData && assignmentData.length > 0) {
-          // Get unique profile IDs
-          const profileIds = [...new Set(assignmentData.map(a => a.profile_id))]
+        if (assigneeData) {
+          // Group assignees by ticket_id
+          const assigneeMap = assigneeData.reduce((acc: Record<string, ProfileInfo[]>, assignee: AssigneeData) => {
+            if (!acc[assignee.ticket_id]) {
+              acc[assignee.ticket_id] = []
+            }
+            acc[assignee.ticket_id].push({
+              user_id: assignee.assignee_id,
+              first_name: assignee.first_name,
+              last_name: assignee.last_name
+            })
+            return acc
+          }, {} as Record<string, ProfileInfo[]>)
           
-          // Fetch profiles for these IDs
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('user_id, first_name, last_name')
-            .in('user_id', profileIds)
-
-          if (profileData) {
-            // Create a map of profiles by user_id for quick lookup
-            const profileMap = profileData.reduce((acc, profile) => ({
-              ...acc,
-              [profile.user_id]: profile
-            }), {} as Record<string, ProfileInfo>)
-
-            // Create the assignee map using the profile map
-            const assigneeMap = assignmentData.reduce((acc, assignment) => {
-              const profile = profileMap[assignment.profile_id]
-              if (!profile) return acc
-              
-              if (!acc[assignment.ticket_id]) {
-                acc[assignment.ticket_id] = []
-              }
-              acc[assignment.ticket_id].push(profile)
-              return acc
-            }, {} as Record<string, ProfileInfo[]>)
-            
-            setAssignees(assigneeMap)
-          }
+          setAssignees(assigneeMap)
         }
       }
     }

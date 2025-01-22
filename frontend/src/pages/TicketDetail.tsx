@@ -11,6 +11,13 @@ type ProfileInfo = {
   last_name: string | null
 }
 
+type AssigneeData = {
+  ticket_id: string
+  assignee_id: string
+  first_name: string | null
+  last_name: string | null
+}
+
 export function TicketDetail() {
   const { id } = useParams<{ id: string }>()
   const { isPowerMode } = useTheme()
@@ -49,35 +56,25 @@ export function TicketDetail() {
           setCreator(creatorData)
         }
 
-        // Fetch assignees with debug info
-        console.log('Fetching assignees for ticket:', id)
-        const { data: assignmentData, error: assignmentError } = await supabase
-          .from('ticket_assignments')
-          .select('ticket_id, profile_id')
-          .eq('ticket_id', id)
+        // Fetch assignees using the new function
+        const { data: assigneeData, error: assigneeError } = await supabase
+          .rpc('get_ticket_assignees', { ticket_ids: [id] })
 
-        console.log('Assignment data:', assignmentData)
-        console.log('Assignment error:', assignmentError)
-
-        if (assignmentError) {
-          setAssignmentError(assignmentError.message)
-        } else if (assignmentData && assignmentData.length > 0) {
-          // Get unique profile IDs
-          const profileIds = [...new Set(assignmentData.map(a => a.profile_id))]
-          
-          // Fetch profiles for these IDs
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('user_id, first_name, last_name')
-            .in('user_id', profileIds)
-
-          if (profileError) {
-            setAssignmentError(profileError.message)
-          } else if (profileData) {
-            setAssignees(profileData)
-          }
+        if (assigneeError) {
+          setAssignmentError(assigneeError.message)
+          setAssignees([])
+        } else if (assigneeData) {
+          // Transform assignee data into ProfileInfo array
+          const profileInfos = assigneeData.map((assignee: AssigneeData) => ({
+            user_id: assignee.assignee_id,
+            first_name: assignee.first_name,
+            last_name: assignee.last_name
+          }))
+          setAssignees(profileInfos)
+          setAssignmentError(null)
         } else {
           setAssignees([])
+          setAssignmentError(null)
         }
       }
 
