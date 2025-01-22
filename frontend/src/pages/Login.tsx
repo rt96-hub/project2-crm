@@ -9,6 +9,7 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const navigate = useNavigate()
   const { isPowerMode } = useTheme()
 
@@ -33,12 +34,16 @@ export function Login() {
     e.preventDefault()
     try {
       setLoading(true)
+      setError(null)
+      setSuccess(null)
       const { error } = await supabase.auth.signUp({
         email,
         password,
       })
       if (error) throw error
-      navigate('/dashboard')
+      setSuccess('Please check your email for a verification link to complete your registration!')
+      setEmail('')
+      setPassword('')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
@@ -91,6 +96,17 @@ export function Login() {
                 'font-impact text-toxic-yellow' :
                 'text-red-700'
               }`}>{error}</div>
+            </div>
+          )}
+          {success && (
+            <div className={`rounded-md p-4 ${isPowerMode ? 
+              'bg-neon-green animate-pulse' :
+              'bg-green-50'
+            }`}>
+              <div className={`text-sm ${isPowerMode ? 
+                'font-impact text-toxic-yellow' :
+                'text-green-700'
+              }`}>{success}</div>
             </div>
           )}
           <div className="rounded-md shadow-sm -space-y-px">

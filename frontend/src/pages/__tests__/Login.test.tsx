@@ -170,7 +170,12 @@ describe('Login', () => {
         email: 'new@example.com',
         password: 'newpass123'
       })
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard')
+      expect(screen.getByText('Please check your email for a verification link to complete your registration!')).toBeInTheDocument()
+      // Verify form is cleared
+      expect(emailInput).toHaveValue('')
+      expect(passwordInput).toHaveValue('')
+      // Verify we don't navigate
+      expect(mockNavigate).not.toHaveBeenCalled()
     })
   })
 

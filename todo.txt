@@ -5,7 +5,7 @@ x fix later migrations around showing profiles of users who have created or been
 - create organization table
 - create organization user table
 
-- email invitation (admin can select an organization or internal and invite a user via email)
+
 
 - dont let admin user remove admin status from self or other admin users
 - tests for new components, also remember to create new tests anytime we make a new component or update an existing one
@@ -38,16 +38,32 @@ x in ticket activity and conversation sidebar, make the scroll bar start at the 
 - notifications in general (on sidebar?)
 - custom attributes on tickets, created in admin panel
 
+- create organization and organization_user tables, add is_customer bool to profile table
+- lock down data available to is_customer profiles
+- organization columns: name, description, customer_since, customer_type_id, customer_status_id, total_contract, default_priority_id, is_active
+- organization_user columns: organization_id, profile_id, name, email, job_title, phone_number
+- customer_type table: id, name (individual, small business, large business, etc)
+    - seed in migrations
+- customer_status table: id, name (in pipeline, under contract, cancelled, etc)
+    - seed in migrations
+
+
 - admin panel
     - create statuses, types, attributes
     - create organizations
     - invite users (to organizations or internal)
     - deactivate or make admin users
+- email invitation (admin can select an organization or internal and invite a user via email)
+    - how to test?
+    - additionally generate an invite code if they go directly to the signup page
+
+- default seed for organizations and organization_users (two orgs, one user in each)
+
 
 - real time updates all over, tickets, activity, conversations, notifications!!!
 x notification icon on sidebar
 - notifications page
-
+- clean up filters on tickets page
 
 - seed tickets and assignees and history (probably create them in UI then back them up)
 - SEED KNOWLEDGE BASE (what kind of company are we? maybe a clown supply company)
@@ -59,3 +75,11 @@ x notification icon on sidebar
 
 - add db push to github actions
 - npm run build and test before deploy??? maybe taken care of on amplify?
+
+- on customer login, they can see their tickets they created (or maybe organization tickets)
+- they can create a new ticket, it will get auto assigned somehow
+- they can see the ticket conversation history, send messages to it
+- help chat, need to flesh this out on both ends
+    - eventually the ai will respond to messages
+    - tbd
+- they can see the knowledge base
