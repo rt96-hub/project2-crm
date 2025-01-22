@@ -21,7 +21,7 @@ export function ConversationSidebar({ isOpen, onClose, ticketId }: ConversationS
   if (!isOpen) return null
 
   return (
-    <div className={`fixed right-0 top-0 h-screen w-96 shadow-lg flex flex-col ${
+    <div className={`fixed right-0 top-0 bottom-0 w-96 shadow-lg flex flex-col ${
       isPowerMode ? 'bg-electric-purple' : 'bg-white border-l border-gray-200'
     }`}>
       {/* Header */}

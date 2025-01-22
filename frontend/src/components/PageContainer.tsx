@@ -7,8 +7,8 @@ interface PageContainerProps {
 
 export function PageContainer({ title, children, onBack, actionButton }: PageContainerProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6 w-full">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-lg shadow h-full flex flex-col">
+      <div className="flex items-center justify-between p-6 border-b">
         <div className="flex items-center">
           {onBack && (
             <button
@@ -23,7 +23,7 @@ export function PageContainer({ title, children, onBack, actionButton }: PageCon
         </div>
         {actionButton}
       </div>
-      <div className="text-gray-900">
+      <div className="flex-1 overflow-auto p-6 text-gray-900">
         {children}
       </div>
     </div>

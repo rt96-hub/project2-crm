@@ -26,19 +26,19 @@ Main database schema type containing all tables, views, and functions:
 type Database = {
   public: {
     Tables: {
-      profiles: {
-        Row: ProfileRow
-        Insert: ProfileInsert
-        Update: ProfileUpdate
-        Relationships: []
-      }
+      priorities: PriorityTable
+      profiles: ProfileTable
+      statuses: StatusTable
+      ticket_assignments: TicketAssignmentTable
+      ticket_comments: TicketCommentTable
+      ticket_history: TicketHistoryTable
+      tickets: TicketTable
     }
-    Views: { ... }
-    Functions: { ... }
-    Enums: { ... }
-  }
-  graphql_public: {
-    // GraphQL-specific types
+    Functions: {
+      get_all_active_profiles: ProfileFunction
+      get_ticket_assignees: TicketAssigneeFunction
+      is_admin: AdminCheckFunction
+    }
   }
 }
 ```
@@ -51,7 +51,6 @@ type ProfileRow = {
   created_at: string
   email: string
   first_name: string | null
-  id: number
   is_active: boolean | null
   is_admin: boolean | null
   job_title: string | null
@@ -59,20 +58,84 @@ type ProfileRow = {
   user_id: string
   work_phone: string | null
 }
+```
 
-type ProfileInsert = {
-  // All fields optional except email and user_id
-  email: string
-  user_id: string
-  first_name?: string | null
-  // ...other fields
+#### Tickets Table
+```typescript
+type TicketRow = {
+  created_at: string
+  creator_id: string
+  custom_fields: Json | null
+  description: string | null
+  due_date: string | null
+  id: string
+  organization_id: string | null
+  priority_id: string
+  resolved_at: string | null
+  status_id: string
+  title: string
+  updated_at: string
 }
+```
 
-type ProfileUpdate = {
-  // All fields optional
-  email?: string
-  first_name?: string | null
-  // ...other fields
+#### Ticket Comments Table
+```typescript
+type TicketCommentRow = {
+  author_id: string
+  content: string
+  created_at: string
+  id: string
+  is_internal: boolean
+  ticket_id: string
+  updated_at: string
+}
+```
+
+#### Ticket History Table
+```typescript
+type TicketHistoryRow = {
+  action: string
+  actor_id: string
+  changes: Json
+  created_at: string
+  id: string
+  ticket_id: string
+}
+```
+
+### Database Functions
+
+#### `get_all_active_profiles`
+Returns all active user profiles:
+```typescript
+type ProfileFunction = {
+  Args: Record<PropertyKey, never>
+  Returns: ProfileRow[]
+}
+```
+
+#### `get_ticket_assignees`
+Returns assignee information for given tickets:
+```typescript
+type TicketAssigneeFunction = {
+  Args: {
+    ticket_ids: string[]
+  }
+  Returns: {
+    ticket_id: string
+    assignee_id: string
+    first_name: string
+    last_name: string
+  }[]
+}
+```
+
+#### `is_admin`
+Checks if current user is an admin:
+```typescript
+type AdminCheckFunction = {
+  Args: Record<PropertyKey, never>
+  Returns: boolean
 }
 ```
 
@@ -83,6 +146,7 @@ Type helper for accessing table row types:
 ```typescript
 // Usage example:
 type UserProfile = Tables<'profiles'>
+type Ticket = Tables<'tickets'>
 ```
 
 #### `TablesInsert<T>`
@@ -90,6 +154,7 @@ Type helper for table insertion operations:
 ```typescript
 // Usage example:
 type NewProfile = TablesInsert<'profiles'>
+type NewTicket = TablesInsert<'tickets'>
 ```
 
 #### `TablesUpdate<T>`
@@ -97,34 +162,8 @@ Type helper for table update operations:
 ```typescript
 // Usage example:
 type ProfileUpdates = TablesUpdate<'profiles'>
+type TicketUpdates = TablesUpdate<'tickets'>
 ```
-
-### Dependencies
-
-- Generated from Supabase database schema
-- Used by TypeScript for type checking
-- Integrated with Supabase client
-
-### Used By
-
-1. Components:
-   - `Admin.tsx` (user management)
-   - `ProfilePopout.tsx` (profile updates)
-   - Any component making database queries
-
-2. Contexts:
-   - `UserContext.tsx` (profile management)
-
-3. API Calls:
-   ```typescript
-   // Example: Typed profile update
-   const updateProfile = async (updates: TablesUpdate<'profiles'>) => {
-     const { error } = await supabase
-       .from('profiles')
-       .update(updates)
-       .eq('user_id', userId)
-   }
-   ```
 
 ## Type Usage Patterns
 
@@ -132,26 +171,28 @@ type ProfileUpdates = TablesUpdate<'profiles'>
 
 1. Querying Data:
    ```typescript
-   type ProfileResponse = {
-     data: Tables<'profiles'> | null
+   type TicketResponse = {
+     data: Tables<'tickets'> | null
      error: Error | null
    }
    ```
 
 2. Inserting Data:
    ```typescript
-   const newProfile: TablesInsert<'profiles'> = {
-     email: string,
-     user_id: string,
+   const newTicket: TablesInsert<'tickets'> = {
+     title: string,
+     creator_id: string,
+     priority_id: string,
+     status_id: string
      // Optional fields
    }
    ```
 
 3. Updating Data:
    ```typescript
-   const updates: TablesUpdate<'profiles'> = {
-     first_name: string,
-     last_name: string,
+   const updates: TablesUpdate<'tickets'> = {
+     title?: string,
+     description?: string,
      // All fields optional
    }
    ```

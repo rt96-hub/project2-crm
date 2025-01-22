@@ -190,7 +190,7 @@ export function TicketDetail() {
           </div>
         }
       >
-        <div className={`space-y-6 ${isPowerMode ? 'font-comic' : ''} ${
+        <div className={`h-full flex flex-col space-y-4 ${isPowerMode ? 'font-comic' : ''} ${
           isActivitySidebarOpen || isConversationSidebarOpen ? 'mr-96' : ''
         }`}>
           {/* Status Row */}
@@ -224,7 +224,13 @@ export function TicketDetail() {
                 Created
               </div>
               <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
-                {new Date(ticket.created_at).toLocaleString()}
+                {new Date(ticket.created_at).toLocaleString(undefined, {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </div>
             </div>
             <div className={`${
@@ -234,7 +240,13 @@ export function TicketDetail() {
                 Due Date
               </div>
               <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
-                {ticket.due_date ? new Date(ticket.due_date).toLocaleString() : 'No due date'}
+                {ticket.due_date ? new Date(ticket.due_date).toLocaleString(undefined, {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 'No due date'}
               </div>
             </div>
           </div>
@@ -280,15 +292,15 @@ export function TicketDetail() {
           </div>
 
           {/* Description Section */}
-          <div className={`${
+          <div className={`flex-1 ${
             isPowerMode ? 'bg-electric-purple rounded-lg p-4' : 'bg-gray-50 rounded-lg p-4'
           }`}>
             <div className={`text-sm font-semibold mb-2 ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
               Description
             </div>
-            <div className={`${
+            <div className={`h-full ${
               isPowerMode ? 'border-2 border-hot-pink text-toxic-yellow' : 'border border-gray-200 text-gray-900'
-            } rounded-lg p-4 whitespace-pre-wrap min-h-[200px]`}>
+            } rounded-lg p-4 whitespace-pre-wrap overflow-auto`}>
               {ticket.description || 'No description'}
             </div>
           </div>

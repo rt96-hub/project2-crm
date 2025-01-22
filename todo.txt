@@ -19,8 +19,10 @@ x ticket assignment at creation
 x ticket table shows creator name and assignee name (or none or name+x if there are multiple)
 x ticket select page needs general overhaul, but some kind of back button (close or otherwise)
 x restructure layout of ticket select page
-- edits to tickets update ticket_history
-- add a sidebar to the selected ticket page that shows the comment history, and other history
+x edits to tickets update ticket_history
+x add a sidebar to the selected ticket page that shows the comment history, and other history
+x format ticket select page, fill height instead of spilling out
+x in ticket activity and conversation sidebar, make the scroll bar start at the bottom, make the enter button auto send the message
 - add attachments to ticket activity
 - suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
 - assignment types, primary, secondary, watcher
@@ -42,6 +44,9 @@ x restructure layout of ticket select page
     - invite users (to organizations or internal)
     - deactivate or make admin users
 
+- real time updates all over, tickets, activity, conversations, notifications!!!
+x notification icon on sidebar
+- notifications page
 
 
 - seed tickets and assignees and history (probably create them in UI then back them up)

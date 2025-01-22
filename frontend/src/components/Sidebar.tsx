@@ -28,14 +28,28 @@ export function Sidebar() {
       'bg-electric-purple text-toxic-yellow animate-wiggle' :
       'bg-gray-800 text-white'
     }`}>
-      <div className={`mb-8 p-2 ${
-        isPowerMode ?
-        'text-3xl font-comic animate-bounce bg-hot-pink rounded-lg transform -rotate-3' :
-        'text-xl font-bold'
-      }`}>
-        <span className={isPowerMode ? 'inline-block' : ''}>
-          {isPowerMode ? '🤡 MadTable 🎭' : 'MadTable'}
-        </span>
+      <div className="flex items-center justify-between mb-8">
+        <div className={`p-2 ${
+          isPowerMode ?
+          'text-3xl font-comic animate-bounce bg-hot-pink rounded-lg transform -rotate-3' :
+          'text-xl font-bold'
+        }`}>
+          <span className={isPowerMode ? 'inline-block' : ''}>
+            {isPowerMode ? '🤡 MadTable 🎭' : 'MadTable'}
+          </span>
+        </div>
+        <button 
+          onClick={() => {/* TODO: Add notification handler */}} 
+          className={`p-2 rounded-full transition-all ${
+            isPowerMode ?
+            'hover:bg-hot-pink transform hover:scale-110 hover:rotate-12' :
+            'hover:bg-gray-700'
+          }`}
+        >
+          <span className={`text-xl ${isPowerMode ? 'animate-bounce' : ''}`}>
+            {isPowerMode ? '🤡📯' : '🔔'}
+          </span>
+        </button>
       </div>
       <nav className="flex-grow">
         {navItems.map((item, index) => (
