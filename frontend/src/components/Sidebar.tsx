@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { ProfilePopout } from './ProfilePopout'
 import { useTheme } from '../context/ThemeContext'
 import { useUser } from '../context/UserContext'
+import { ThemeToggle } from './ThemeToggle'
 
 export function Sidebar() {
   const location = useLocation()
@@ -65,9 +66,10 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="relative">
+        <ThemeToggle />
         <button
           onClick={() => setIsProfileOpen(!isProfileOpen)}
-          className={`flex items-center w-full p-3 rounded transition-all ${
+          className={`flex items-center w-full p-3 rounded transition-all mt-2 ${
             isPowerMode ?
             'font-brush text-xl hover:bg-hot-pink transform hover:scale-105 hover:rotate-2' :
             'hover:bg-gray-700'

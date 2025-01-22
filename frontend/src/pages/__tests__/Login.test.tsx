@@ -209,19 +209,19 @@ describe('Login', () => {
   })
 
   describe('Power Mode', () => {
-    it('renders regular mode UI by default', () => {
+    it('renders light mode UI by default', () => {
       renderWithProviders(<Login />)
       
-      // Check regular mode elements
+      // Check light mode elements
       expect(screen.getByText('MadTable')).toBeInTheDocument()
       expect(screen.getByText('Sign in to your account')).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /regular mode/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /light mode/i })).toBeInTheDocument()
       
-      // Regular mode styling checks
+      // Light mode styling checks
       const form = screen.getByTestId('login-form')
       expect(form).not.toHaveClass('bg-electric-purple')
       
-      // Regular mode placeholders
+      // Light mode placeholders
       expect(screen.getByPlaceholderText('Email address')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('Password')).toBeInTheDocument()
     })
@@ -251,11 +251,11 @@ describe('Login', () => {
       expect(screen.getByPlaceholderText('🔑 Super Secret Password! 🔑')).toBeInTheDocument()
     })
 
-    it('toggles between regular and power mode', () => {
+    it('toggles between light and power mode', () => {
       renderWithProviders(<Login />)
       
-      // Start in regular mode
-      const toggleButton = screen.getByRole('button', { name: /regular mode/i })
+      // Start in light mode
+      const toggleButton = screen.getByRole('button', { name: /light mode/i })
       expect(screen.getByText('MadTable')).toBeInTheDocument()
       
       // Click toggle button

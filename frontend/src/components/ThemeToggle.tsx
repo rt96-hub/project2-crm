@@ -7,15 +7,17 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       className={`
-        fixed top-4 right-4 z-50 px-4 py-2 rounded-full font-comic text-lg
-        transition-all duration-300 transform hover:scale-110
+        flex items-center w-full p-3 rounded transition-all
         ${isPowerMode ? 
-          'bg-electric-purple text-toxic-yellow border-4 border-hot-pink animate-pulse shadow-[0_0_15px_5px_#FF69B4]' : 
-          'bg-gray-200 text-gray-800 border border-gray-300 hover:bg-gray-300'
+          'font-brush text-xl bg-electric-purple text-toxic-yellow border-2 border-hot-pink hover:bg-hot-pink transform hover:scale-105 hover:rotate-2' : 
+          'bg-gray-700 text-white hover:bg-gray-600'
         }
       `}
     >
-      {isPowerMode ? '🤪 POWER MODE! 🤪' : '😊 Regular Mode 😊'}
+      <span className={`mr-3 ${isPowerMode ? 'animate-spin' : ''}`}>
+        {isPowerMode ? '🤪' : '🎨'}
+      </span>
+      {isPowerMode ? 'POWER MODE!' : 'Light Mode'}
     </button>
   )
 } 

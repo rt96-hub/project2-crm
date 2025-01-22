@@ -1,4 +1,4 @@
-- fix later migrations around showing profiles of users who have created or been assigned to tickets
+x fix later migrations around showing profiles of users who have created or been assigned to tickets
 
 - when creating an account, the user shouldnt be able to immediately login, this is different than the dev?
 
@@ -16,12 +16,41 @@ x sortable on all tickets table columns
 
 - remove timestamp from due date column either just on creation or out of database completely
 x ticket assignment at creation
-- ticket table shows creator name and assignee name (or none or name+x if there are multiple)
-- ticket select page needs general overhaul, but some kind of back button (close or otherwise)
+x ticket table shows creator name and assignee name (or none or name+x if there are multiple)
+x ticket select page needs general overhaul, but some kind of back button (close or otherwise)
+x restructure layout of ticket select page
 - edits to tickets update ticket_history
 - add a sidebar to the selected ticket page that shows the comment history, and other history
+- add attachments to ticket activity
 - suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
 - assignment types, primary, secondary, watcher
 
+
+- media table
+- converstaions and activities both have media array type? or a second table that has media_id, conversation_id, activity_id (one has to be null)
+
+- ticket_conversations table
+- all messages between users and clients
+- add attachments to conversations
+- mentions in activity log
+- notifications in general (on sidebar?)
+- custom attributes on tickets, created in admin panel
+
+- admin panel
+    - create statuses, types, attributes
+    - create organizations
+    - invite users (to organizations or internal)
+    - deactivate or make admin users
+
+
+
 - seed tickets and assignees and history (probably create them in UI then back them up)
 - SEED KNOWLEDGE BASE (what kind of company are we? maybe a clown supply company)
+
+- ai buttons on the activity and conversation sidebars
+- eventually the ai buttons will suggest a relevant message or action to take on a ticket
+- ai can reference existing messages, and internal and external knowledge base
+- after that we wont need the ai button at all
+
+- add db push to github actions
+- npm run build and test before deploy??? maybe taken care of on amplify?

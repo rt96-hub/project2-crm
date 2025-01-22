@@ -2,30 +2,32 @@ import { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { useUser } from '../context/UserContext'
-import { TablesInsert, Tables } from '../types/database.types'
+import { Tables } from '../types/database.types'
 import { createPortal } from 'react-dom'
 
-interface CreateTicketPopoutProps {
+interface EditTicketPopoutProps {
   isOpen: boolean
   onClose: () => void
-  onTicketCreated: () => void
+  onTicketUpdated: () => void
+  ticket: Tables<'tickets'>
+  currentAssignees: { user_id: string; first_name: string | null; last_name: string | null }[]
 }
 
-export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateTicketPopoutProps) {
+export function EditTicketPopout({ isOpen, onClose, onTicketUpdated, ticket, currentAssignees }: EditTicketPopoutProps) {
   const { isPowerMode } = useTheme()
   const { profile } = useUser()
   const [formData, setFormData] = useState<{
     title: string
-    description: string
+    description: string | null
     status_id: string
     priority_id: string
     due_date: string
   }>({
-    title: '',
-    description: '',
-    status_id: '',
-    priority_id: '',
-    due_date: '',
+    title: ticket.title,
+    description: ticket.description || '',
+    status_id: ticket.status_id,
+    priority_id: ticket.priority_id,
+    due_date: ticket.due_date || '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,11 +35,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
   const [priorities, setPriorities] = useState<Tables<'priorities'>[]>([])
   const [profiles, setProfiles] = useState<Tables<'profiles'>[]>([])
   const [assigneeSearch, setAssigneeSearch] = useState('')
-  const [selectedAssignees, setSelectedAssignees] = useState<{
-    user_id: string
-    first_name: string | null
-    last_name: string | null
-  }[]>([])
+  const [selectedAssignees, setSelectedAssignees] = useState(currentAssignees)
   const [filteredProfiles, setFilteredProfiles] = useState<Tables<'profiles'>[]>([])
 
   useEffect(() => {
@@ -98,61 +96,121 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
     setLoading(true)
     setError(null)
 
-    const ticketData: TablesInsert<'tickets'> = {
-      title: formData.title,
-      description: formData.description,
-      status_id: formData.status_id,
-      priority_id: formData.priority_id,
-      due_date: formData.due_date || null,
-      creator_id: profile.user_id,
-    }
-
-    // Create ticket
-    const { data: ticketResult, error: createError } = await supabase
-      .from('tickets')
-      .insert(ticketData)
-      .select()
-      .single()
-
-    if (createError) {
+    // Start a transaction
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setError('User not authenticated')
       setLoading(false)
-      setError(createError.message)
       return
     }
 
-    // Create ticket assignments
-    const assigneesToAdd = selectedAssignees.length > 0 ? selectedAssignees : [{
-      user_id: profile.user_id,
-      first_name: profile.first_name,
-      last_name: profile.last_name
-    }]
+    // 1. Update ticket
+    const { error: updateError } = await supabase
+      .from('tickets')
+      .update({
+        title: formData.title,
+        description: formData.description,
+        status_id: formData.status_id,
+        priority_id: formData.priority_id,
+        due_date: formData.due_date || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', ticket.id)
 
-    const assignmentData: TablesInsert<'ticket_assignments'>[] = assigneesToAdd.map(assignee => ({
-      ticket_id: ticketResult.id,
-      profile_id: assignee.user_id,
-      assignment_type: 'standard'
-    }))
+    if (updateError) {
+      setError(updateError.message)
+      setLoading(false)
+      return
+    }
 
-    const { error: assignmentError } = await supabase
-      .from('ticket_assignments')
-      .insert(assignmentData)
+    // 2. Handle assignees
+    // Get current assignees for comparison
+    const currentAssigneeIds = currentAssignees.map(a => a.user_id)
+    const newAssigneeIds = selectedAssignees.map(a => a.user_id)
+    
+    // Find assignees to remove and add
+    const assigneesToRemove = currentAssigneeIds.filter(id => !newAssigneeIds.includes(id))
+    const assigneesToAdd = newAssigneeIds.filter(id => !currentAssigneeIds.includes(id))
+
+    // Remove old assignees
+    if (assigneesToRemove.length > 0) {
+      const { error: removeError } = await supabase
+        .from('ticket_assignments')
+        .delete()
+        .eq('ticket_id', ticket.id)
+        .in('profile_id', assigneesToRemove)
+
+      if (removeError) {
+        setError(removeError.message)
+        setLoading(false)
+        return
+      }
+    }
+
+    // Add new assignees
+    if (assigneesToAdd.length > 0) {
+      const newAssignments = assigneesToAdd.map(assigneeId => ({
+        ticket_id: ticket.id,
+        profile_id: assigneeId,
+        assignment_type: 'standard'
+      }))
+
+      const { error: addError } = await supabase
+        .from('ticket_assignments')
+        .insert(newAssignments)
+
+      if (addError) {
+        setError(addError.message)
+        setLoading(false)
+        return
+      }
+    }
+
+    // 3. Create history record
+    const changes: Record<string, any> = {}
+    
+    if (formData.title !== ticket.title) {
+      changes.title = { from: ticket.title, to: formData.title }
+    }
+    if (formData.status_id !== ticket.status_id) {
+      changes.status_id = { from: ticket.status_id, to: formData.status_id }
+    }
+    if (formData.priority_id !== ticket.priority_id) {
+      changes.priority_id = { from: ticket.priority_id, to: formData.priority_id }
+    }
+    if (formData.description !== ticket.description) {
+      changes.description = { from: ticket.description, to: formData.description }
+    }
+    if (formData.due_date !== ticket.due_date) {
+      changes.due_date = { from: ticket.due_date, to: formData.due_date }
+    }
+    if (assigneesToAdd.length > 0 || assigneesToRemove.length > 0) {
+      changes.assignees = {
+        removed: assigneesToRemove,
+        added: assigneesToAdd
+      }
+    }
+
+    if (Object.keys(changes).length > 0) {
+      const { error: historyError } = await supabase
+        .from('ticket_history')
+        .insert({
+          ticket_id: ticket.id,
+          actor_id: user.id,
+          action: 'update',
+          changes
+        })
+
+      if (historyError) {
+        setError(historyError.message)
+        setLoading(false)
+        return
+      }
+    }
 
     setLoading(false)
-
-    if (assignmentError) {
-      setError(assignmentError.message)
-    } else {
-      onTicketCreated()
-      onClose()
-      setFormData({
-        title: '',
-        description: '',
-        status_id: '',
-        priority_id: '',
-        due_date: '',
-      })
-      setSelectedAssignees([])
-    }
+    onTicketUpdated()
+    onClose()
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -194,7 +252,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
           'text-toxic-yellow font-impact animate-pulse' : 
           'text-gray-900'
         }`}>
-          {isPowerMode ? '✨ Create Magical Ticket ✨' : 'Create New Ticket'}
+          {isPowerMode ? '✨ Edit Magical Ticket ✨' : 'Edit Ticket'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -215,7 +273,6 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
                 'bg-neon-green text-eye-burn-orange placeholder-hot-pink font-comic border-2 border-hot-pink' :
                 'border border-gray-300'
               }`}
-              placeholder="Enter ticket title"
             />
           </div>
 
@@ -227,7 +284,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
             </label>
             <textarea
               name="description"
-              value={formData.description}
+              value={formData.description || ''}
               onChange={handleInputChange}
               rows={4}
               className={`w-full px-3 py-2 rounded ${
@@ -235,7 +292,6 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
                 'bg-neon-green text-eye-burn-orange placeholder-hot-pink font-comic border-2 border-hot-pink' :
                 'border border-gray-300'
               }`}
-              placeholder="Enter ticket description"
             />
           </div>
 
@@ -258,7 +314,6 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
                   'border border-gray-300'
                 }`}
               >
-                <option value="">Select status</option>
                 {statuses.map(status => (
                   <option key={status.id} value={status.id}>
                     {status.name}
@@ -284,7 +339,6 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
                   'border border-gray-300'
                 }`}
               >
-                <option value="">Select priority</option>
                 {priorities.map(priority => (
                   <option key={priority.id} value={priority.id}>
                     {priority.name}
@@ -302,7 +356,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
               <input
                 type="datetime-local"
                 name="due_date"
-                value={formData.due_date ?? ''}
+                value={formData.due_date}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 rounded ${
                   isPowerMode ?
@@ -414,8 +468,8 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
               }`}
             >
               {loading ? 
-                (isPowerMode ? '🎭 Conjuring... 🎪' : 'Creating...') : 
-                (isPowerMode ? '✨ Create Magic! ✨' : 'Create Ticket')
+                (isPowerMode ? '🎭 Enchanting... 🎪' : 'Saving...') : 
+                (isPowerMode ? '✨ Save Changes! ✨' : 'Save Changes')
               }
             </button>
           </div>

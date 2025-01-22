@@ -32,13 +32,20 @@ describe('PageContainer', () => {
       </PageContainer>
     )
 
-    const container = screen.getByRole('heading', { level: 1, name: /test title/i }).closest('div')
+    // Get the outermost container
+    const container = screen.getByText('Test Content').closest('.bg-white')
     expect(container).toHaveClass('bg-white', 'rounded-lg', 'shadow', 'p-6', 'w-full')
     
-    const titleElement = screen.getByRole('heading', { level: 1 })
-    expect(titleElement).toHaveClass('text-2xl', 'font-bold', 'mb-4', 'text-gray-900')
+    // Check the title row container
+    const titleRow = screen.getByRole('heading', { level: 1, name: /test title/i }).closest('div')
+    expect(titleRow?.parentElement).toHaveClass('flex', 'items-center', 'justify-between', 'mb-4')
     
-    const contentContainer = container?.lastChild as HTMLElement
+    // Check the title element
+    const titleElement = screen.getByRole('heading', { level: 1 })
+    expect(titleElement).toHaveClass('text-2xl', 'font-bold', 'text-gray-900')
+    
+    // Check the content container
+    const contentContainer = screen.getByText('Test Content').parentElement
     expect(contentContainer).toHaveClass('text-gray-900')
   })
 }) 

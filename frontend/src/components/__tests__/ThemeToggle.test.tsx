@@ -24,12 +24,12 @@ describe('ThemeToggle', () => {
     }))
   })
 
-  it('renders in regular mode by default', () => {
+  it('renders in light mode by default', () => {
     renderWithProviders(<ThemeToggle />)
     
     const button = screen.getByRole('button')
-    expect(button).toHaveTextContent('😊 Regular Mode 😊')
-    expect(button).toHaveClass('bg-gray-200', 'text-gray-800')
+    expect(button).toHaveTextContent('Light Mode')
+    expect(button).toHaveClass('bg-gray-700', 'text-white')
     expect(button).not.toHaveClass('animate-pulse')
   })
 
@@ -42,8 +42,8 @@ describe('ThemeToggle', () => {
     renderWithProviders(<ThemeToggle />)
     
     const button = screen.getByRole('button')
-    expect(button).toHaveTextContent('🤪 POWER MODE! 🤪')
-    expect(button).toHaveClass('bg-electric-purple', 'text-toxic-yellow', 'animate-pulse')
+    expect(button).toHaveTextContent('POWER MODE!')
+    expect(button).toHaveClass('bg-electric-purple', 'text-toxic-yellow')
   })
 
   it('calls toggleTheme when clicked', () => {
@@ -53,20 +53,17 @@ describe('ThemeToggle', () => {
     expect(mockToggleTheme).toHaveBeenCalledTimes(1)
   })
 
-  it('maintains proper positioning and styling', () => {
+  it('maintains proper styling', () => {
     renderWithProviders(<ThemeToggle />)
     
     const button = screen.getByRole('button')
     expect(button).toHaveClass(
-      'fixed',
-      'top-4',
-      'right-4',
-      'z-50',
-      'rounded-full',
-      'transition-all',
-      'duration-300',
-      'transform',
-      'hover:scale-110'
+      'flex',
+      'items-center',
+      'w-full',
+      'p-3',
+      'rounded',
+      'transition-all'
     )
   })
 }) 

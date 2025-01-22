@@ -188,7 +188,7 @@ describe('ProfilePopout', () => {
       vi.clearAllMocks()
     })
 
-    it('renders with regular theme styles', () => {
+    it('renders with light theme styles', () => {
       vi.mocked(useTheme).mockImplementation(() => ({
         isPowerMode: false,
         setIsPowerMode: mockSetIsPowerMode,

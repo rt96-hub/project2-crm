@@ -1,9 +1,12 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { PageContainer } from '../components/PageContainer'
 import { Tables } from '../types/database.types'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { TicketActivitySidebar } from '../components/TicketActivitySidebar'
+import { ConversationSidebar } from '../components/ConversationSidebar'
+import { EditTicketPopout } from '../components/EditTicketPopout'
 
 type ProfileInfo = {
   user_id: string
@@ -20,6 +23,7 @@ type AssigneeData = {
 
 export function TicketDetail() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { isPowerMode } = useTheme()
   const [ticket, setTicket] = useState<Tables<'tickets'> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -28,6 +32,9 @@ export function TicketDetail() {
   const [creator, setCreator] = useState<ProfileInfo | null>(null)
   const [assignees, setAssignees] = useState<ProfileInfo[]>([])
   const [assignmentError, setAssignmentError] = useState<string | null>(null)
+  const [isActivitySidebarOpen, setIsActivitySidebarOpen] = useState(false)
+  const [isConversationSidebarOpen, setIsConversationSidebarOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -112,7 +119,10 @@ export function TicketDetail() {
 
   if (loading) {
     return (
-      <PageContainer title="Loading Ticket...">
+      <PageContainer 
+        title="Loading Ticket..."
+        onBack={() => navigate('/tickets')}
+      >
         <div className={`animate-pulse ${
           isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'
         }`}>
@@ -124,7 +134,10 @@ export function TicketDetail() {
 
   if (!ticket) {
     return (
-      <PageContainer title="Ticket Not Found">
+      <PageContainer 
+        title="Ticket Not Found"
+        onBack={() => navigate('/tickets')}
+      >
         <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}>
           Could not find ticket with ID: {id}
         </div>
@@ -137,64 +150,232 @@ export function TicketDetail() {
     return [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown'
   }
 
-  const fields = [
-    { label: 'Title', value: ticket.title },
-    { label: 'Description', value: ticket.description || 'No description' },
-    { label: 'Status', value: statuses[ticket.status_id] || 'Loading...' },
-    { label: 'Priority', value: priorities[ticket.priority_id] || 'Loading...' },
-    { label: 'Created', value: new Date(ticket.created_at).toLocaleString() },
-    { label: 'Updated', value: new Date(ticket.updated_at).toLocaleString() },
-    { label: 'Due Date', value: ticket.due_date ? new Date(ticket.due_date).toLocaleString() : 'No due date' },
-    { label: 'Creator', value: creator ? getFullName(creator) : 'Loading...' },
-    { 
-      label: 'Assignees', 
-      value: assignmentError ? 
-        `Error loading assignees: ${assignmentError}` : 
-        assignees.length > 0 ? 
-          assignees.map(a => getFullName(a)).join(', ') : 
-          'No assignees'
-    },
-    { label: 'Organization', value: ticket.organization_id || 'No organization' },
-    { label: 'Custom Fields', value: ticket.custom_fields ? JSON.stringify(ticket.custom_fields, null, 2) : 'No custom fields' },
-    { label: 'Debug Info', value: `
-      Assignee Count: ${assignees.length}
-      Assignment Error: ${assignmentError || 'None'}
-      Creator ID: ${ticket.creator_id}
-      Creator Profile: ${creator ? JSON.stringify(creator, null, 2) : 'Not loaded'}
-    ` }
-  ]
-
   return (
-    <PageContainer title={`Ticket: ${ticket.title}`}>
-      <div className={`space-y-6 ${
-        isPowerMode ? 'font-comic' : ''
-      }`}>
-        {fields.map(({ label, value }) => (
-          <div 
-            key={label}
-            className={`${
-              isPowerMode ? 
-              'bg-electric-purple p-4 rounded-lg border-2 border-hot-pink transform hover:rotate-1 hover:scale-105 transition-all' :
-              'border-b border-gray-200 pb-4'
-            }`}
-          >
-            <div className={`font-bold mb-1 ${
-              isPowerMode ? 
-              'text-toxic-yellow text-xl font-impact animate-pulse' :
-              'text-gray-600'
-            }`}>
-              {label}
+    <>
+      <PageContainer 
+        title={`Ticket: ${ticket.title}`}
+        onBack={() => navigate('/tickets')}
+        actionButton={
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setIsEditOpen(true)}
+              className={`px-4 py-2 rounded-lg transition-all ${
+                isPowerMode ?
+                'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
+                'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => setIsConversationSidebarOpen(true)}
+              className={`px-4 py-2 rounded-lg transition-all ${
+                isPowerMode ?
+                'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
+                'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
+            >
+              Conversation
+            </button>
+            <button
+              onClick={() => setIsActivitySidebarOpen(true)}
+              className={`px-4 py-2 rounded-lg transition-all ${
+                isPowerMode ?
+                'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
+                'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
+            >
+              Activity
+            </button>
+          </div>
+        }
+      >
+        <div className={`space-y-6 ${isPowerMode ? 'font-comic' : ''} ${
+          isActivitySidebarOpen || isConversationSidebarOpen ? 'mr-96' : ''
+        }`}>
+          {/* Status Row */}
+          <div className={`grid grid-cols-4 gap-4 ${
+            isPowerMode ? 'bg-electric-purple rounded-lg p-4' : 'bg-gray-50 rounded-lg p-4'
+          }`}>
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink' : 'border border-gray-200'
+            } rounded-lg p-3`}>
+              <div className={`text-sm font-semibold ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Status
+              </div>
+              <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
+                {statuses[ticket.status_id] || 'Loading...'}
+              </div>
             </div>
-            <div className={
-              isPowerMode ? 
-              'text-toxic-yellow whitespace-pre-wrap' :
-              'text-gray-900 whitespace-pre-wrap'
-            }>
-              {value}
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink' : 'border border-gray-200'
+            } rounded-lg p-3`}>
+              <div className={`text-sm font-semibold ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Priority
+              </div>
+              <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
+                {priorities[ticket.priority_id] || 'Loading...'}
+              </div>
+            </div>
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink' : 'border border-gray-200'
+            } rounded-lg p-3`}>
+              <div className={`text-sm font-semibold ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Created
+              </div>
+              <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
+                {new Date(ticket.created_at).toLocaleString()}
+              </div>
+            </div>
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink' : 'border border-gray-200'
+            } rounded-lg p-3`}>
+              <div className={`text-sm font-semibold ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Due Date
+              </div>
+              <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
+                {ticket.due_date ? new Date(ticket.due_date).toLocaleString() : 'No due date'}
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-    </PageContainer>
+
+          {/* People Row */}
+          <div className={`grid grid-cols-3 gap-4 ${
+            isPowerMode ? 'bg-electric-purple rounded-lg p-4' : 'bg-gray-50 rounded-lg p-4'
+          }`}>
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink' : 'border border-gray-200'
+            } rounded-lg p-3`}>
+              <div className={`text-sm font-semibold ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Creator
+              </div>
+              <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
+                {creator ? getFullName(creator) : 'Loading...'}
+              </div>
+            </div>
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink' : 'border border-gray-200'
+            } rounded-lg p-3`}>
+              <div className={`text-sm font-semibold ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Assignees
+              </div>
+              <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
+                {assignmentError ? 
+                  `Error: ${assignmentError}` : 
+                  assignees.length > 0 ? 
+                    assignees.map(a => getFullName(a)).join(', ') : 
+                    'No assignees'}
+              </div>
+            </div>
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink' : 'border border-gray-200'
+            } rounded-lg p-3`}>
+              <div className={`text-sm font-semibold ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Organization
+              </div>
+              <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
+                {ticket.organization_id || 'No organization'}
+              </div>
+            </div>
+          </div>
+
+          {/* Description Section */}
+          <div className={`${
+            isPowerMode ? 'bg-electric-purple rounded-lg p-4' : 'bg-gray-50 rounded-lg p-4'
+          }`}>
+            <div className={`text-sm font-semibold mb-2 ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+              Description
+            </div>
+            <div className={`${
+              isPowerMode ? 'border-2 border-hot-pink text-toxic-yellow' : 'border border-gray-200 text-gray-900'
+            } rounded-lg p-4 whitespace-pre-wrap min-h-[200px]`}>
+              {ticket.description || 'No description'}
+            </div>
+          </div>
+
+          {/* Custom Fields Section */}
+          {ticket.custom_fields && (
+            <div className={`${
+              isPowerMode ? 'bg-electric-purple rounded-lg p-4' : 'bg-gray-50 rounded-lg p-4'
+            }`}>
+              <div className={`text-sm font-semibold mb-2 ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}`}>
+                Custom Fields
+              </div>
+              <div className={`${
+                isPowerMode ? 'border-2 border-hot-pink text-toxic-yellow' : 'border border-gray-200 text-gray-900'
+              } rounded-lg p-4 whitespace-pre-wrap`}>
+                {JSON.stringify(ticket.custom_fields, null, 2)}
+              </div>
+            </div>
+          )}
+        </div>
+      </PageContainer>
+
+      <TicketActivitySidebar
+        isOpen={isActivitySidebarOpen}
+        onClose={() => setIsActivitySidebarOpen(false)}
+        ticketId={ticket.id}
+      />
+
+      <ConversationSidebar
+        isOpen={isConversationSidebarOpen}
+        onClose={() => setIsConversationSidebarOpen(false)}
+        ticketId={ticket.id}
+      />
+
+      {ticket && (
+        <EditTicketPopout
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          onTicketUpdated={async () => {
+            // Refetch ticket data
+            const { data: ticketData, error: ticketError } = await supabase
+              .from('tickets')
+              .select('*')
+              .eq('id', id)
+              .single()
+
+            if (ticketError) {
+              console.error('Error fetching ticket:', ticketError)
+            } else {
+              setTicket(ticketData)
+
+              // Fetch creator info
+              const { data: creatorData } = await supabase
+                .from('profiles')
+                .select('user_id, first_name, last_name')
+                .eq('user_id', ticketData.creator_id)
+                .single()
+
+              if (creatorData) {
+                setCreator(creatorData)
+              }
+
+              // Fetch assignees
+              const { data: assigneeData, error: assigneeError } = await supabase
+                .rpc('get_ticket_assignees', { ticket_ids: [id] })
+
+              if (assigneeError) {
+                setAssignmentError(assigneeError.message)
+                setAssignees([])
+              } else if (assigneeData) {
+                const profileInfos = assigneeData.map((assignee: AssigneeData) => ({
+                  user_id: assignee.assignee_id,
+                  first_name: assignee.first_name,
+                  last_name: assignee.last_name
+                }))
+                setAssignees(profileInfos)
+                setAssignmentError(null)
+              } else {
+                setAssignees([])
+                setAssignmentError(null)
+              }
+            }
+          }}
+          ticket={ticket}
+          currentAssignees={assignees}
+        />
+      )}
+    </>
   )
 } 

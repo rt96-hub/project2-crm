@@ -53,7 +53,6 @@ export function Login() {
         'bg-gray-50'
       }`}
     >
-      <ThemeToggle />
       <div className="max-w-md w-full space-y-8 relative">
         <div className={`text-center ${isPowerMode ? 'transform -rotate-6' : ''}`}>
           <h1 className={`mb-2 ${isPowerMode ? 
@@ -146,6 +145,10 @@ export function Login() {
             >
               {isPowerMode ? (loading ? '🤔' : '🎭') : ''} Sign up
             </button>
+          </div>
+          
+          <div className="mt-6">
+            <ThemeToggle />
           </div>
         </form>
       </div>

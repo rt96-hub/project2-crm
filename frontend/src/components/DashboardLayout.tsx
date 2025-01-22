@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { useTheme } from '../context/ThemeContext'
-import { ThemeToggle } from './ThemeToggle'
 
 export function DashboardLayout() {
   const { isPowerMode } = useTheme()
@@ -14,7 +13,6 @@ export function DashboardLayout() {
     }`}>
       <Sidebar />
       <div className="flex-1 ml-64">
-        <ThemeToggle />
         <main className={`w-full h-full p-8 ${
           isPowerMode ? 
           'bg-opacity-90 bg-toxic-yellow font-comic' : 
