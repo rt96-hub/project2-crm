@@ -15,6 +15,7 @@ interface ArticleWithCategory extends KnowledgeBaseArticle {
 
 export function KnowledgeBase() {
   const [articles, setArticles] = useState<ArticleWithCategory[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const { isPowerMode } = useTheme()
   const { profile } = useUser()
@@ -29,7 +30,6 @@ export function KnowledgeBase() {
             *,
             category:knowledge_base_categories(id, name, is_active)
           `)
-          .eq('is_active', true)
           .order('created_at', { ascending: false })
 
         if (articlesError) throw articlesError
@@ -44,6 +44,11 @@ export function KnowledgeBase() {
 
     fetchArticles()
   }, [])
+
+  const filteredArticles = articles.filter(article =>
+    article.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (profile && profile.is_admin ? true : article.is_active)
+  )
 
   return (
     <PageContainer title="Knowledge Base">
@@ -62,6 +67,17 @@ export function KnowledgeBase() {
           </button>
         </div>
       )}
+
+      {/* Search Bar */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search articles..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+        />
+      </div>
 
       {/* Articles Table */}
       {loading ? (
@@ -87,6 +103,13 @@ export function KnowledgeBase() {
                 }`}>
                   Category
                 </th>
+                {profile && !profile.is_customer && profile.is_admin && (
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isPowerMode ? 'text-toxic-yellow' : 'text-gray-500'
+                  }`}>
+                    Active
+                  </th>
+                )}
                 {profile && !profile.is_customer && (
                   <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
                     isPowerMode ? 'text-toxic-yellow' : 'text-gray-500'
@@ -97,7 +120,7 @@ export function KnowledgeBase() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {articles.map((article) => (
+              {filteredArticles.map((article) => (
                 <tr 
                   key={article.id}
                   onClick={() => navigate(`/knowledge-base/${article.id}`)}
@@ -117,6 +140,22 @@ export function KnowledgeBase() {
                       {article.category.name}
                     </div>
                   </td>
+                  {profile && !profile.is_customer && profile.is_admin && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${article.is_active
+                          ? isPowerMode
+                            ? 'bg-neon-green text-electric-purple'
+                            : 'bg-green-100 text-green-800'
+                          : isPowerMode
+                            ? 'bg-hot-pink text-toxic-yellow'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {article.is_active ? 'Yes' : 'No'}
+                      </div>
+                    </td>
+                  )}
                   {profile && !profile.is_customer && (
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium

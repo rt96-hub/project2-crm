@@ -64,6 +64,7 @@ CREATE POLICY "Articles viewable by non-customer users - all" ON knowledge_base_
             SELECT 1 FROM profiles
             WHERE profiles.user_id = auth.uid()
             AND is_customer = false
+            AND is_admin = false
         )
     );
 
@@ -71,9 +72,22 @@ CREATE POLICY "Articles editable by non-customer users" ON knowledge_base_articl
     FOR ALL
     TO authenticated
     USING (
-        EXISTS (
+        is_active = true
+        AND EXISTS (
             SELECT 1 FROM profiles
             WHERE profiles.user_id = auth.uid()
             AND is_customer = false
+        )
+    );
+
+
+CREATE POLICY "Articles editable by admin users - all" ON knowledge_base_articles
+    FOR ALL
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE profiles.user_id = auth.uid()
+            AND is_admin = true
         )
     );

@@ -84,6 +84,16 @@ export function Admin() {
         >
           Edit Organization Statuses
         </button>
+        <button
+          onClick={() => navigate('/admin/knowledge-base-categories')}
+          className={`px-4 py-2 rounded-lg font-medium text-left ${
+            isPowerMode
+              ? 'bg-electric-purple text-toxic-yellow hover:bg-hot-pink'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          Edit Knowledge Base Categories
+        </button>
       </div>
     </div>
   )

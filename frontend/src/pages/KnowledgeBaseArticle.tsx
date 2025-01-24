@@ -49,6 +49,22 @@ export function KnowledgeBaseArticle() {
     fetchArticle()
   }, [id])
 
+  const toggleActiveStatus = async () => {
+    if (!article) return;
+    try {
+      const { error } = await supabase
+        .from('knowledge_base_articles')
+        .update({ is_active: !article.is_active })
+        .eq('id', article.id);
+
+      if (error) throw error;
+
+      setArticle({ ...article, is_active: !article.is_active });
+    } catch (error) {
+      console.error('Error updating article status:', error);
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer title="Loading...">
@@ -91,21 +107,45 @@ export function KnowledgeBaseArticle() {
             </span>
           )}
         </div>
-        {profile && !profile.is_customer && (
+        <div className="flex items-center gap-4">
+          {profile && !profile.is_customer && profile.is_admin && (
+            <button
+              onClick={toggleActiveStatus}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple hover:bg-hot-pink hover:text-toxic-yellow'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {article.is_active ? 'Make Inactive' : 'Make Active'}
+            </button>
+          )}
+          {profile && !profile.is_customer && (
+            <button
+              onClick={() => navigate(`/knowledge-base/edit/${article.id}`)}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple hover:bg-hot-pink hover:text-toxic-yellow'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              Edit Article
+            </button>
+          )}
           <button
-            onClick={() => navigate(`/knowledge-base/edit/${article.id}`)}
+            onClick={() => navigate('/knowledge-base')}
             className={`px-4 py-2 rounded-lg font-medium ${
               isPowerMode
                 ? 'bg-neon-green text-electric-purple hover:bg-hot-pink hover:text-toxic-yellow'
                 : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            Edit Article
+            Return to Knowledge Base
           </button>
-        )}
+        </div>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg p-6">
+      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
         <RichTextViewer content={article.body} />
       </div>
     </PageContainer>

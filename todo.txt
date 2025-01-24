@@ -82,24 +82,28 @@ ROBERT !!! FIRST THING TO DO FOR SOME REASON WE CANT SEE THE TICKETS OR USERS IN
 
 
 DO THIS FIRST THING TOMORROW TICKET PAGE BACK ARROW????
-- clicking bold button in the knowledge bacse creation page causes it to be created
+x clicking bold button in the knowledge bacse creation page causes it to be created
 
-- knowledge base
-    - main page
-        - search bar
-        - categories
-        - articles (public vs private)
-        - create new article (non customer)
-        - edit article (non customer)
-        - create new category (non customer)
-    - admin panel
-        - mark active or inactive
-        - mark as public or private
-    - article page
-        - rich text reader
-    - article edit page
-        - rich text editor
-        - set category
+x knowledge base
+    x main page
+        x search bar
+        x categories
+        x articles (public vs private)
+        x create new article (non customer)
+        x edit article (non customer)
+    x admin panel
+        x create new category (admin)
+        x mark active or inactive
+            x actually going to do this in the regular knowledge base page, admins will have active inactive column, and can click a button in the article itself
+        x mark as public or private
+    x article page
+        x rich text reader
+        x edit if employees
+        x return to knowledge base
+    x article edit page/create page
+        x rich text editor
+        x set category
+        x set public or private
 
 
 - ticket_conversations table
@@ -147,6 +151,9 @@ DO THIS FIRST THING TOMORROW TICKET PAGE BACK ARROW????
 - update rls for all the above (may need to strategize this with o1)
     - replace the get_all_active_profiles function with something related to non customer profiles
 
+- employee can see all other users, but only select
+- admin can edit all users
+- customer can see all profiles, but only select (and can't see a page that actually lists them, just see names when they are interacting)
 
 
 - default seed for organizations and organization_users (two orgs, one user in each)

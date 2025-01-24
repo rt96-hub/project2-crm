@@ -21,6 +21,7 @@ import { DashboardLayout } from './components/DashboardLayout'
 import { ThemeProvider } from './context/ThemeContext'
 import { UserProvider } from './context/UserContext'
 import { Team } from './pages/Team'
+import { KnowledgeBaseCategories } from './pages/admin/KnowledgeBaseCategories'
 import './App.css'
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
               <Route path="/admin/priorities" element={<Priorities />} />
               <Route path="/admin/org-types" element={<OrganizationTypes />} />
               <Route path="/admin/org-statuses" element={<OrganizationStatuses />} />
+              <Route path="/admin/knowledge-base-categories" element={<KnowledgeBaseCategories />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
