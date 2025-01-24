@@ -109,7 +109,7 @@ x customer view help chat button
     - maybe a panel that shows all their help chat conversations
     - well they can see them in their tickets
 
-- ticket_conversations table
+x ticket_conversations table
     - when customer sends a help chat message, it creates a ticket, and adds the message to the conversation
     - when a ticket is created, it is assigned to the employee with the least open tickets
     - all messages between users and clients
@@ -128,9 +128,9 @@ x customer view help chat button
             - maybe dont show some of the details? priorities, statuses, etc, just tickets?
         x tickets
             - table of tickets for the organization (need to fix the rls)
-            - they can create a new ticket, they do the assignment manually for org and assignee
+            x they can create a new ticket, they do the assignment manually for org and assignee
                 - need to figure this out, how to pass in the org, and have the app determine the assignee
-            - they can see the ticket conversation history, send messages to it
+            x they can see the ticket conversation history, send messages to it
         x knowledge base
         x help chat bubble
             - help chat, need to flesh this out on both ends

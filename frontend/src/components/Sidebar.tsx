@@ -4,6 +4,7 @@ import { ProfilePopout } from './ProfilePopout'
 import { useTheme } from '../context/ThemeContext'
 import { useUser } from '../context/UserContext'
 import { ThemeToggle } from './ThemeToggle'
+import { HelpChatBubble } from './HelpChatBubble'
 
 export function Sidebar() {
   const location = useLocation()
@@ -85,6 +86,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="relative">
+        {profile?.is_customer && <HelpChatBubble />}
         <ThemeToggle />
         <button
           onClick={() => setIsProfileOpen(!isProfileOpen)}
