@@ -66,22 +66,7 @@ ROBERT !!! FIRST THING TO DO FOR SOME REASON WE CANT SEE THE TICKETS OR USERS IN
         x name, description, customer_since, total_contract, default_priority, status, type
     x admins have ability to edit details (already in admin panel)
 
-
-- profiles page (other users can view details)
-    - all tickets, etc
-
-- dont let admin user remove admin status from self or other admin users
-- tests for new components, also remember to create new tests anytime we make a new component or update an existing one
-- remove timestamp from due date column either just on creation or out of database completely
-- add attachments to ticket activity
-- suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
-- assignment types, primary, secondary, watcher
-- media table
-- converstaions and activities both have media array type? or a second table that has media_id, conversation_id, activity_id (one has to be null)
-
-
-
-DO THIS FIRST THING TOMORROW TICKET PAGE BACK ARROW????
+x DO THIS FIRST THING TOMORROW TICKET PAGE BACK ARROW????
 x clicking bold button in the knowledge bacse creation page causes it to be created
 
 x knowledge base
@@ -105,12 +90,28 @@ x knowledge base
         x set category
         x set public or private
 
-- customer view help chat button
+
+- profiles page (other users can view details)
+    - all tickets, etc
+
+- dont let admin user remove admin status from self or other admin users
+- tests for new components, also remember to create new tests anytime we make a new component or update an existing one
+- remove timestamp from due date column either just on creation or out of database completely
+- add attachments to ticket activity
+- suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
+- assignment types, primary, secondary, watcher
+- media table
+- converstaions and activities both have media array type? or a second table that has media_id, conversation_id, activity_id (one has to be null)
+
+
+
+x customer view help chat button
     - maybe a panel that shows all their help chat conversations
     - well they can see them in their tickets
 
 - ticket_conversations table
     - when customer sends a help chat message, it creates a ticket, and adds the message to the conversation
+    - when a ticket is created, it is assigned to the employee with the least open tickets
     - all messages between users and clients
     - add attachments to conversations
 - mentions in activity log
@@ -119,14 +120,16 @@ x knowledge base
 
 
 - login as a customer
-    - build their sidebar
+    x build their sidebar
         x dashboard
         x organization
+            - they can see all the members of their organization (right now the rls is not showing the other members)
             - automatically brings them to their own organization detail page
             - maybe dont show some of the details? priorities, statuses, etc, just tickets?
         x tickets
-            - table of tickets for the organization
-            - they can create a new ticket, it will get auto assigned somehow
+            - table of tickets for the organization (need to fix the rls)
+            - they can create a new ticket, they do the assignment manually for org and assignee
+                - need to figure this out, how to pass in the org, and have the app determine the assignee
             - they can see the ticket conversation history, send messages to it
         x knowledge base
         x help chat bubble

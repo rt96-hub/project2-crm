@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { TicketActivitySidebar } from '../components/TicketActivitySidebar'
 import { ConversationSidebar } from '../components/ConversationSidebar'
 import { EditTicketPopout } from '../components/EditTicketPopout'
+import { useUser } from '../context/UserContext'
 
 type ProfileInfo = {
   user_id: string
@@ -26,6 +27,7 @@ export function TicketDetail() {
   const navigate = useNavigate()
   const location = useLocation()
   const { isPowerMode } = useTheme()
+  const { profile } = useUser()
   const [ticket, setTicket] = useState<Tables<'tickets'> | null>(null)
   const [loading, setLoading] = useState(true)
   const [statuses, setStatuses] = useState<Record<string, string>>({})
@@ -131,7 +133,6 @@ export function TicketDetail() {
     return (
       <PageContainer 
         title="Loading Ticket..."
-        onBack={() => navigate(getReturnInfo().path)}
       >
         <div className={`animate-pulse ${
           isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'
@@ -146,7 +147,6 @@ export function TicketDetail() {
     return (
       <PageContainer 
         title="Ticket Not Found"
-        onBack={() => navigate(getReturnInfo().path)}
       >
         <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}>
           Could not find ticket with ID: {id}
@@ -164,19 +164,32 @@ export function TicketDetail() {
     <>
       <PageContainer 
         title={`Ticket: ${ticket.title}`}
-        onBack={() => navigate(getReturnInfo().path)}
         actionButton={
           <div className="flex space-x-2">
-            <button
-              onClick={() => setIsEditOpen(true)}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                isPowerMode ?
-                'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
-                'bg-blue-500 text-white hover:bg-blue-600'
-              }`}
-            >
-              Edit
-            </button>
+            {!profile?.is_customer && (
+              <>
+                <button
+                  onClick={() => setIsEditOpen(true)}
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    isPowerMode ?
+                    'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
+                    'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setIsActivitySidebarOpen(true)}
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    isPowerMode ?
+                    'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
+                    'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  Activity
+                </button>
+              </>
+            )}
             <button
               onClick={() => setIsConversationSidebarOpen(true)}
               className={`px-4 py-2 rounded-lg transition-all ${
@@ -186,16 +199,6 @@ export function TicketDetail() {
               }`}
             >
               Conversation
-            </button>
-            <button
-              onClick={() => setIsActivitySidebarOpen(true)}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                isPowerMode ?
-                'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
-                'bg-blue-500 text-white hover:bg-blue-600'
-              }`}
-            >
-              Activity
             </button>
             <button
               onClick={() => navigate(getReturnInfo().path)}
