@@ -12,6 +12,9 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.0",
+    "@tinymce/tinymce-react": "^5.1.1",
+    "@tiptap/react": "^2.11.3",
+    "@tiptap/starter-kit": "^2.11.3",
     "@types/react-router-dom": "^5.3.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",

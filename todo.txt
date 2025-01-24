@@ -53,6 +53,20 @@ x team page (show all employees) visible to admins
     - how to see other users besides just admin and yourself?
     - can select a user to view their profile page
 
+ROBERT !!! FIRST THING TO DO FOR SOME REASON WE CANT SEE THE TICKETS OR USERS IN THE TABLE HERE
+- organization page (non customers can view, admins can edit)
+    x table of all visible organizations if not a customer
+        x as a non customer, you can select any of the organization pages to view
+        x if a customer, navigate directly to the organization select page
+    x show all users in the organization
+        - click a customer user to view their profile page
+    x show all tickets in the organization
+        x click a ticket to view its details
+    x show all details about the organization
+        x name, description, customer_since, total_contract, default_priority, status, type
+    x admins have ability to edit details (already in admin panel)
+
+
 - profiles page (other users can view details)
     - all tickets, etc
 
@@ -64,6 +78,28 @@ x team page (show all employees) visible to admins
 - assignment types, primary, secondary, watcher
 - media table
 - converstaions and activities both have media array type? or a second table that has media_id, conversation_id, activity_id (one has to be null)
+
+
+
+DO THIS FIRST THING TOMORROW TICKET PAGE BACK ARROW????
+- clicking bold button in the knowledge bacse creation page causes it to be created
+
+- knowledge base
+    - main page
+        - search bar
+        - categories
+        - articles (public vs private)
+        - create new article (non customer)
+        - edit article (non customer)
+        - create new category (non customer)
+    - admin panel
+        - mark active or inactive
+        - mark as public or private
+    - article page
+        - rich text reader
+    - article edit page
+        - rich text editor
+        - set category
 
 
 - ticket_conversations table
@@ -93,18 +129,6 @@ x team page (show all employees) visible to admins
 
 
 
-ROBERT !!! FIRST THING TO DO FOR SOME REASON WE CANT SEE THE TICKETS OR USERS IN THE TABLE HERE
-- organization page (non customers can view, admins can edit)
-    x table of all visible organizations if not a customer
-        x as a non customer, you can select any of the organization pages to view
-        x if a customer, navigate directly to the organization select page
-    x show all users in the organization
-        - click a customer user to view their profile page
-    x show all tickets in the organization
-        x click a ticket to view its details
-    x show all details about the organization
-        x name, description, customer_since, total_contract, default_priority, status, type
-    x admins have ability to edit details (already in admin panel)
 
 
 - email invitation (admin can select an organization or internal and invite a user via email)
@@ -126,7 +150,7 @@ ROBERT !!! FIRST THING TO DO FOR SOME REASON WE CANT SEE THE TICKETS OR USERS IN
 
 
 - default seed for organizations and organization_users (two orgs, one user in each)
-
+- seed data in demo site
 
 - real time updates all over, tickets, activity, conversations, notifications!!!
 x notification icon on sidebar

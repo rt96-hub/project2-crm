@@ -6,6 +6,9 @@ import { TicketDetail } from './pages/TicketDetail'
 import { Customers } from './pages/Customers'
 import { CustomerDetail } from './pages/CustomerDetail'
 import { KnowledgeBase } from './pages/KnowledgeBase'
+import { KnowledgeBaseArticle } from './pages/KnowledgeBaseArticle'
+import { NewKnowledgeBaseArticle } from './pages/NewKnowledgeBaseArticle'
+import { EditKnowledgeBaseArticle } from './pages/EditKnowledgeBaseArticle'
 import { Reporting } from './pages/Reporting'
 import { Admin } from './pages/Admin'
 import { Users } from './pages/admin/Users'
@@ -35,6 +38,9 @@ function App() {
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/team" element={<Team />} />
               <Route path="/knowledge-base" element={<KnowledgeBase />} />
+              <Route path="/knowledge-base/new" element={<NewKnowledgeBaseArticle />} />
+              <Route path="/knowledge-base/:id" element={<KnowledgeBaseArticle />} />
+              <Route path="/knowledge-base/edit/:id" element={<EditKnowledgeBaseArticle />} />
               <Route path="/reporting" element={<Reporting />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/users" element={<Users />} />
