@@ -44,6 +44,7 @@ export function EditTicketPopout({ isOpen, onClose, onTicketUpdated, ticket, cur
       const { data: statusData } = await supabase
         .from('statuses')
         .select('*')
+        .eq('is_active', true)
         .order('name')
 
       if (statusData) {
@@ -54,6 +55,7 @@ export function EditTicketPopout({ isOpen, onClose, onTicketUpdated, ticket, cur
       const { data: priorityData } = await supabase
         .from('priorities')
         .select('*')
+        .eq('is_active', true)
         .order('name')
 
       if (priorityData) {
@@ -62,7 +64,7 @@ export function EditTicketPopout({ isOpen, onClose, onTicketUpdated, ticket, cur
 
       // Fetch active profiles
       const { data: profileData } = await supabase
-        .rpc('get_all_active_profiles')
+        .rpc('get_all_active_employee_profiles')
 
       if (profileData) {
         setProfiles(profileData)

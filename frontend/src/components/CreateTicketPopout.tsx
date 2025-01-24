@@ -20,12 +20,14 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
     status_id: string
     priority_id: string
     due_date: string
+    organization_id: string
   }>({
     title: '',
     description: '',
     status_id: '',
     priority_id: '',
     due_date: '',
+    organization_id: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +41,9 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
     last_name: string | null
   }[]>([])
   const [filteredProfiles, setFilteredProfiles] = useState<Tables<'profiles'>[]>([])
+  const [organizations, setOrganizations] = useState<Tables<'organizations'>[]>([])
+  const [orgSearch, setOrgSearch] = useState('')
+  const [filteredOrgs, setFilteredOrgs] = useState<Tables<'organizations'>[]>([])
 
   useEffect(() => {
     async function fetchOptions() {
@@ -46,6 +51,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
       const { data: statusData } = await supabase
         .from('statuses')
         .select('*')
+        .eq('is_active', true)
         .order('name')
 
       if (statusData) {
@@ -56,6 +62,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
       const { data: priorityData } = await supabase
         .from('priorities')
         .select('*')
+        .eq('is_active', true)
         .order('name')
 
       if (priorityData) {
@@ -64,10 +71,21 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
 
       // Fetch active profiles
       const { data: profileData } = await supabase
-        .rpc('get_all_active_profiles')
+        .rpc('get_all_active_employee_profiles')
 
       if (profileData) {
         setProfiles(profileData)
+      }
+
+      // Fetch organizations
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('name')
+        .eq('is_active', true)
+
+      if (orgData) {
+        setOrganizations(orgData)
       }
     }
 
@@ -91,9 +109,28 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
     }
   }, [assigneeSearch, profiles])
 
+  useEffect(() => {
+    // Filter organizations based on search
+    if (orgSearch.trim()) {
+      const searchLower = orgSearch.toLowerCase()
+      const filtered = organizations.filter(org => 
+        org.name.toLowerCase().includes(searchLower)
+      )
+      setFilteredOrgs(filtered)
+    } else {
+      setFilteredOrgs([])
+    }
+  }, [orgSearch, organizations])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!profile) return
+
+    // Validate that either organization or assignee is selected
+    if (!formData.organization_id && selectedAssignees.length === 0) {
+      setError('Please select either an organization or at least one assignee')
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -105,6 +142,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
       priority_id: formData.priority_id,
       due_date: formData.due_date || null,
       creator_id: profile.user_id,
+      organization_id: formData.organization_id || null,
     }
 
     // Create ticket
@@ -150,6 +188,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
         status_id: '',
         priority_id: '',
         due_date: '',
+        organization_id: '',
       })
       setSelectedAssignees([])
     }
@@ -175,6 +214,13 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
     setAssigneeSearch('')
   }
 
+  // Prevent enter key from submitting the form
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+      e.preventDefault()
+    }
+  }
+
   if (!isOpen) return null
 
   return createPortal(
@@ -197,7 +243,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
           {isPowerMode ? '✨ Create Magical Ticket ✨' : 'Create New Ticket'}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" onKeyDown={handleKeyDown}>
           <div>
             <label className={`block text-sm font-medium mb-1 ${
               isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
@@ -317,6 +363,53 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
             <label className={`block text-sm font-medium mb-1 ${
               isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
             }`}>
+              Organization
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={orgSearch}
+                onChange={(e) => setOrgSearch(e.target.value)}
+                placeholder="Search for organization..."
+                className={`w-full px-3 py-2 rounded ${
+                  isPowerMode ?
+                  'bg-neon-green text-eye-burn-orange placeholder-hot-pink font-comic border-2 border-hot-pink' :
+                  'border border-gray-300'
+                } ${!formData.organization_id && selectedAssignees.length === 0 ? 'border-red-500' : ''}`}
+              />
+              
+              {/* Organization search results dropdown */}
+              {filteredOrgs.length > 0 && (
+                <div className={`absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md shadow-lg ${
+                  isPowerMode ? 'bg-electric-purple border-2 border-hot-pink' : 'bg-white border border-gray-300'
+                }`}>
+                  {filteredOrgs.map(org => (
+                    <button
+                      key={org.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, organization_id: org.id }))
+                        setOrgSearch(org.name)
+                        setFilteredOrgs([])
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-opacity-80 ${
+                        isPowerMode ?
+                        'text-toxic-yellow hover:bg-hot-pink' :
+                        'hover:bg-gray-100'
+                      }`}
+                    >
+                      {org.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
+            }`}>
               Assignees
             </label>
             <div className="space-y-2">
@@ -356,7 +449,7 @@ export function CreateTicketPopout({ isOpen, onClose, onTicketCreated }: CreateT
                     isPowerMode ?
                     'bg-neon-green text-eye-burn-orange placeholder-hot-pink font-comic border-2 border-hot-pink' :
                     'border border-gray-300'
-                  }`}
+                  } ${!formData.organization_id && selectedAssignees.length === 0 ? 'border-red-500' : ''}`}
                 />
                 
                 {/* Dropdown for search results */}

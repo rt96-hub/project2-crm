@@ -94,49 +94,79 @@ export function EditOrganizationPopout({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className={`bg-white rounded-lg p-6 max-w-2xl w-full mx-4 ${isPowerMode ? 'border-4 border-hot-pink' : ''}`}>
-        <h2 className={`text-2xl font-bold mb-4 ${isPowerMode ? 'text-hot-pink' : 'text-gray-900'}`}>
+      <div className={`rounded-lg p-6 max-w-2xl w-full mx-4 ${
+        isPowerMode 
+          ? 'bg-electric-purple border-4 border-hot-pink' 
+          : 'bg-gray-700'
+      }`}>
+        <h2 className={`text-2xl font-bold mb-4 ${
+          isPowerMode ? 'text-toxic-yellow font-impact animate-pulse' : 'text-white'
+        }`}>
           Edit Organization
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className={`block text-sm font-medium ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-200'
+            }`}>Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple placeholder-hot-pink border-2 border-hot-pink focus:border-toxic-yellow focus:ring-toxic-yellow font-comic'
+                  : 'bg-gray-600 border-gray-500 text-white focus:border-blue-500 focus:ring-blue-500'
+              }`}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className={`block text-sm font-medium ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-200'
+            }`}>Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple placeholder-hot-pink border-2 border-hot-pink focus:border-toxic-yellow focus:ring-toxic-yellow font-comic'
+                  : 'bg-gray-600 border-gray-500 text-white focus:border-blue-500 focus:ring-blue-500'
+              }`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Customer Since</label>
+            <label className={`block text-sm font-medium ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-200'
+            }`}>Customer Since</label>
             <input
               type="date"
               value={customerSince}
               onChange={(e) => setCustomerSince(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple border-2 border-hot-pink focus:border-toxic-yellow focus:ring-toxic-yellow font-comic'
+                  : 'bg-gray-600 border-gray-500 text-white focus:border-blue-500 focus:ring-blue-500'
+              }`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Organization Type</label>
+            <label className={`block text-sm font-medium ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-200'
+            }`}>Organization Type</label>
             <select
               value={customerTypeId || ''}
               onChange={(e) => setCustomerTypeId(e.target.value || null)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple border-2 border-hot-pink focus:border-toxic-yellow focus:ring-toxic-yellow font-comic'
+                  : 'bg-gray-600 border-gray-500 text-white focus:border-blue-500 focus:ring-blue-500'
+              }`}
             >
               <option value="">Select Type</option>
               {organizationTypes.map((type) => (
@@ -146,11 +176,17 @@ export function EditOrganizationPopout({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Organization Status</label>
+            <label className={`block text-sm font-medium ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-200'
+            }`}>Organization Status</label>
             <select
               value={customerStatusId || ''}
               onChange={(e) => setCustomerStatusId(e.target.value || null)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple border-2 border-hot-pink focus:border-toxic-yellow focus:ring-toxic-yellow font-comic'
+                  : 'bg-gray-600 border-gray-500 text-white focus:border-blue-500 focus:ring-blue-500'
+              }`}
             >
               <option value="">Select Status</option>
               {organizationStatuses.map((status) => (
@@ -160,22 +196,34 @@ export function EditOrganizationPopout({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Total Contract Value</label>
+            <label className={`block text-sm font-medium ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-200'
+            }`}>Total Contract Value</label>
             <input
               type="number"
               step="0.01"
               value={totalContract}
               onChange={(e) => setTotalContract(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple placeholder-hot-pink border-2 border-hot-pink focus:border-toxic-yellow focus:ring-toxic-yellow font-comic'
+                  : 'bg-gray-600 border-gray-500 text-white focus:border-blue-500 focus:ring-blue-500'
+              }`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Default Priority</label>
+            <label className={`block text-sm font-medium ${
+              isPowerMode ? 'text-toxic-yellow' : 'text-gray-200'
+            }`}>Default Priority</label>
             <select
               value={defaultPriorityId || ''}
               onChange={(e) => setDefaultPriorityId(e.target.value || null)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm ${
+                isPowerMode
+                  ? 'bg-neon-green text-electric-purple border-2 border-hot-pink focus:border-toxic-yellow focus:ring-toxic-yellow font-comic'
+                  : 'bg-gray-600 border-gray-500 text-white focus:border-blue-500 focus:ring-blue-500'
+              }`}
             >
               <option value="">Select Priority</option>
               {priorities.map((priority) => (
@@ -190,8 +238,8 @@ export function EditOrganizationPopout({
               onClick={onClose}
               className={`px-4 py-2 rounded-lg font-medium ${
                 isPowerMode
-                  ? 'bg-electric-purple text-toxic-yellow hover:bg-hot-pink'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-electric-purple text-toxic-yellow hover:bg-hot-pink font-comic'
+                  : 'bg-gray-600 text-white hover:bg-gray-500'
               }`}
             >
               Cancel
@@ -201,11 +249,11 @@ export function EditOrganizationPopout({
               disabled={loading}
               className={`px-4 py-2 rounded-lg font-medium ${
                 isPowerMode
-                  ? 'bg-neon-green text-electric-purple hover:bg-hot-pink hover:text-toxic-yellow'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              } disabled:opacity-50`}
+                  ? 'bg-neon-green text-electric-purple hover:bg-hot-pink hover:text-toxic-yellow font-comic disabled:opacity-50'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+              }`}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? (isPowerMode ? '🎭 Saving... 🎪' : 'Saving...') : (isPowerMode ? '✨ Save Changes ✨' : 'Save Changes')}
             </button>
           </div>
         </form>

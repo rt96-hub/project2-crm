@@ -6,6 +6,7 @@ type ConfigItem = {
   id: string
   name: string
   is_active: boolean
+  is_counted_open?: boolean
   created_at: string
 }
 
@@ -61,6 +62,27 @@ export function ConfigItemManager({ title, tableName, onClose }: ConfigItemManag
     }
   }
 
+  const toggleCountedOpen = async (item: ConfigItem) => {
+    if (tableName !== 'statuses') return
+
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .update({ is_counted_open: !item.is_counted_open })
+        .eq('id', item.id)
+
+      if (error) throw error
+      
+      setItems(items.map(i => 
+        i.id === item.id 
+          ? { ...i, is_counted_open: !item.is_counted_open }
+          : i
+      ))
+    } catch (error) {
+      console.error(`Error updating ${tableName}:`, error)
+    }
+  }
+
   const updateItemName = async (item: ConfigItem, newName: string) => {
     try {
       const { error } = await supabase
@@ -85,9 +107,15 @@ export function ConfigItemManager({ title, tableName, onClose }: ConfigItemManag
     if (!newItemName.trim()) return
 
     try {
+      const newItem = { 
+        name: newItemName.trim(), 
+        is_active: true,
+        ...(tableName === 'statuses' ? { is_counted_open: true } : {})
+      }
+
       const { data, error } = await supabase
         .from(tableName)
-        .insert([{ name: newItemName.trim(), is_active: true }])
+        .insert([newItem])
         .select()
 
       if (error) throw error
@@ -199,6 +227,21 @@ export function ConfigItemManager({ title, tableName, onClose }: ConfigItemManag
                   >
                     {item.name}
                   </span>
+                )}
+                {tableName === 'statuses' && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Count as Open</label>
+                    <input
+                      type="checkbox"
+                      checked={item.is_counted_open}
+                      onChange={() => toggleCountedOpen(item)}
+                      className={`w-4 h-4 ${
+                        isPowerMode
+                          ? 'text-hot-pink focus:ring-electric-purple'
+                          : 'text-blue-600 focus:ring-blue-500'
+                      }`}
+                    />
+                  </div>
                 )}
               </div>
               <button

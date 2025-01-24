@@ -15,6 +15,9 @@ export function Sidebar() {
     { path: '/dashboard', label: 'Home', icon: isPowerMode ? '🤪' : '🏠' },
     { path: '/tickets', label: 'Tickets', icon: isPowerMode ? '👻' : '🎫' },
     { path: '/customers', label: 'Customers', icon: isPowerMode ? '🤖' : '👥' },
+    ...(profile?.is_customer ? [] : [
+      { path: '/team', label: 'Team', icon: isPowerMode ? '🎭' : '👥' }
+    ]),
     { path: '/knowledge-base', label: 'Knowledge Base', icon: isPowerMode ? '🎪' : '📚' },
     { path: '/reporting', label: 'Reporting', icon: isPowerMode ? '🌈' : '📊' },
     ...(profile?.is_admin ? [

@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Tickets } from './pages/Tickets'
 import { TicketDetail } from './pages/TicketDetail'
 import { Customers } from './pages/Customers'
+import { CustomerDetail } from './pages/CustomerDetail'
 import { KnowledgeBase } from './pages/KnowledgeBase'
 import { Reporting } from './pages/Reporting'
 import { Admin } from './pages/Admin'
@@ -16,6 +17,7 @@ import { Organizations } from './pages/admin/Organizations'
 import { DashboardLayout } from './components/DashboardLayout'
 import { ThemeProvider } from './context/ThemeContext'
 import { UserProvider } from './context/UserContext'
+import { Team } from './pages/Team'
 import './App.css'
 
 function App() {
@@ -30,6 +32,8 @@ function App() {
               <Route path="/tickets" element={<Tickets />} />
               <Route path="/tickets/:id" element={<TicketDetail />} />
               <Route path="/customers" element={<Customers />} />
+              <Route path="/customers/:id" element={<CustomerDetail />} />
+              <Route path="/team" element={<Team />} />
               <Route path="/knowledge-base" element={<KnowledgeBase />} />
               <Route path="/reporting" element={<Reporting />} />
               <Route path="/admin" element={<Admin />} />

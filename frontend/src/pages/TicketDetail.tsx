@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { PageContainer } from '../components/PageContainer'
 import { Tables } from '../types/database.types'
@@ -24,6 +24,7 @@ type AssigneeData = {
 export function TicketDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { isPowerMode } = useTheme()
   const [ticket, setTicket] = useState<Tables<'tickets'> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -35,6 +36,7 @@ export function TicketDetail() {
   const [isActivitySidebarOpen, setIsActivitySidebarOpen] = useState(false)
   const [isConversationSidebarOpen, setIsConversationSidebarOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [organization, setOrganization] = useState<Tables<'organizations'> | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -43,7 +45,7 @@ export function TicketDetail() {
       // Fetch ticket
       const { data: ticketData, error: ticketError } = await supabase
         .from('tickets')
-        .select('*')
+        .select('*, organizations(*)')
         .eq('id', id)
         .single()
 
@@ -51,6 +53,7 @@ export function TicketDetail() {
         console.error('Error fetching ticket:', ticketError)
       } else {
         setTicket(ticketData)
+        setOrganization(ticketData.organizations)
 
         // Fetch creator info
         const { data: creatorData } = await supabase
@@ -117,11 +120,18 @@ export function TicketDetail() {
     fetchData()
   }, [id])
 
+  // Determine the return path and label based on the previous location
+  const getReturnInfo = () => {
+    const path = location.state?.from || '/tickets'
+    const label = path.includes('customers') ? 'Customer Details' : 'Tickets'
+    return { path, label }
+  }
+
   if (loading) {
     return (
       <PageContainer 
         title="Loading Ticket..."
-        onBack={() => navigate('/tickets')}
+        onBack={() => navigate(getReturnInfo().path)}
       >
         <div className={`animate-pulse ${
           isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'
@@ -136,7 +146,7 @@ export function TicketDetail() {
     return (
       <PageContainer 
         title="Ticket Not Found"
-        onBack={() => navigate('/tickets')}
+        onBack={() => navigate(getReturnInfo().path)}
       >
         <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-600'}>
           Could not find ticket with ID: {id}
@@ -154,7 +164,7 @@ export function TicketDetail() {
     <>
       <PageContainer 
         title={`Ticket: ${ticket.title}`}
-        onBack={() => navigate('/tickets')}
+        onBack={() => navigate(getReturnInfo().path)}
         actionButton={
           <div className="flex space-x-2">
             <button
@@ -186,6 +196,16 @@ export function TicketDetail() {
               }`}
             >
               Activity
+            </button>
+            <button
+              onClick={() => navigate(getReturnInfo().path)}
+              className={`px-4 py-2 rounded-lg transition-all ${
+                isPowerMode ?
+                'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
+                'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
+            >
+              Return to {getReturnInfo().label}
             </button>
           </div>
         }
@@ -286,7 +306,7 @@ export function TicketDetail() {
                 Organization
               </div>
               <div className={isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'}>
-                {ticket.organization_id || 'No organization'}
+                {organization ? organization.name : 'No organization'}
               </div>
             </div>
           </div>
@@ -351,6 +371,7 @@ export function TicketDetail() {
               console.error('Error fetching ticket:', ticketError)
             } else {
               setTicket(ticketData)
+              setOrganization(ticketData.organizations)
 
               // Fetch creator info
               const { data: creatorData } = await supabase

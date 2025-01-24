@@ -13,6 +13,7 @@ export const createMockProfile = (overrides: Partial<Profile> = {}): Profile => 
   first_name: 'Test',
   is_active: true,
   is_admin: false,
+  is_customer: false,
   job_title: 'Tester',
   last_name: 'User',
   user_id: '123',

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { Tables } from '../types/database.types'
 import { useEffect, useState, useMemo } from 'react'
@@ -38,11 +38,13 @@ type AssigneeData = {
 
 export function TicketTable({ tickets }: TicketTableProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isPowerMode } = useTheme()
   const [statuses, setStatuses] = useState<Record<string, string>>({})
   const [priorities, setPriorities] = useState<Record<string, string>>({})
   const [creators, setCreators] = useState<Record<string, ProfileInfo>>({})
   const [assignees, setAssignees] = useState<Record<string, ProfileInfo[]>>({})
+  const [organizations, setOrganizations] = useState<Record<string, string>>({})
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: '', direction: 'asc' })
   const [openDropdown, setOpenDropdown] = useState<'status' | 'priority' | null>(null)
   const [filters, setFilters] = useState<Filters>({
@@ -55,10 +57,17 @@ export function TicketTable({ tickets }: TicketTableProps) {
 
   useEffect(() => {
     async function fetchOptions() {
-      // Fetch statuses
+      // Get unique status and priority IDs from current tickets
+      const ticketStatusIds = [...new Set(tickets.map(t => t.status_id))]
+      const ticketPriorityIds = [...new Set(tickets.map(t => t.priority_id))]
+      const organizationIds = [...new Set(tickets.map(t => t.organization_id).filter(Boolean))]
+
+      // Fetch statuses - either active or currently used in tickets
       const { data: statusData } = await supabase
         .from('statuses')
         .select('id, name')
+        .or(`is_active.eq.true,id.in.(${ticketStatusIds.join(',')})`)
+        .order('name')
 
       if (statusData) {
         const statusMap = statusData.reduce((acc, status) => ({
@@ -68,10 +77,12 @@ export function TicketTable({ tickets }: TicketTableProps) {
         setStatuses(statusMap)
       }
 
-      // Fetch priorities
+      // Fetch priorities - either active or currently used in tickets
       const { data: priorityData } = await supabase
         .from('priorities')
         .select('id, name')
+        .or(`is_active.eq.true,id.in.(${ticketPriorityIds.join(',')})`)
+        .order('name')
 
       if (priorityData) {
         const priorityMap = priorityData.reduce((acc, priority) => ({
@@ -79,6 +90,22 @@ export function TicketTable({ tickets }: TicketTableProps) {
           [priority.id]: priority.name
         }), {} as Record<string, string>)
         setPriorities(priorityMap)
+      }
+
+      // Fetch organizations
+      if (organizationIds.length > 0) {
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', organizationIds)
+
+        if (orgData) {
+          const orgMap = orgData.reduce((acc, org) => ({
+            ...acc,
+            [org.id]: org.name
+          }), {} as Record<string, string>)
+          setOrganizations(orgMap)
+        }
       }
 
       // Fetch creators
@@ -197,8 +224,8 @@ export function TicketTable({ tickets }: TicketTableProps) {
     return result
   }, [tickets, filters, sortConfig])
 
-  const handleTicketClick = (ticketId: string) => {
-    navigate(`/tickets/${ticketId}`)
+  const handleRowClick = (ticketId: string) => {
+    navigate(`/tickets/${ticketId}`, { state: { from: location.pathname } })
   }
 
   const getSortIndicator = (key: SortableColumns) => {
@@ -248,6 +275,7 @@ export function TicketTable({ tickets }: TicketTableProps) {
             </th>
             <th className="px-6 py-2">Creator</th>
             <th className="px-6 py-2">Assignees</th>
+            <th className="px-6 py-2">Organization</th>
             <th className="px-6 py-2">
               <div className="relative filter-dropdown">
                 <button
@@ -354,6 +382,7 @@ export function TicketTable({ tickets }: TicketTableProps) {
             </th>
             <th className="px-6 py-3 text-left">Creator</th>
             <th className="px-6 py-3 text-left">Assignees</th>
+            <th className="px-6 py-3 text-left">Organization</th>
             <th 
               className="px-6 py-3 text-left cursor-pointer"
               onClick={() => handleSort('status_id')}
@@ -380,7 +409,7 @@ export function TicketTable({ tickets }: TicketTableProps) {
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className={isPowerMode ? 'text-toxic-yellow' : 'divide-y divide-gray-200'}>
           {filteredAndSortedTickets.length === 0 ? (
             <tr>
               <td 
@@ -398,7 +427,7 @@ export function TicketTable({ tickets }: TicketTableProps) {
             filteredAndSortedTickets.map((ticket) => (
               <tr 
                 key={ticket.id}
-                onClick={() => handleTicketClick(ticket.id)}
+                onClick={() => handleRowClick(ticket.id)}
                 className={`cursor-pointer transition-all ${
                   isPowerMode ?
                   'hover:bg-neon-green hover:text-eye-burn-orange hover:scale-105 hover:-rotate-1' :
@@ -408,6 +437,7 @@ export function TicketTable({ tickets }: TicketTableProps) {
                 <td className="px-6 py-4 border-b">{ticket.title}</td>
                 <td className="px-6 py-4 border-b">{getCreatorName(ticket.creator_id)}</td>
                 <td className="px-6 py-4 border-b">{getAssigneesDisplay(ticket.id)}</td>
+                <td className="px-6 py-4 border-b">{ticket.organization_id ? organizations[ticket.organization_id] || 'Loading...' : '-'}</td>
                 <td className="px-6 py-4 border-b">{statuses[ticket.status_id] || 'Loading...'}</td>
                 <td className="px-6 py-4 border-b">{priorities[ticket.priority_id] || 'Loading...'}</td>
                 <td className="px-6 py-4 border-b">

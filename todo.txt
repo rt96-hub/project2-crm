@@ -1,20 +1,9 @@
 x fix later migrations around showing profiles of users who have created or been assigned to tickets
-
-- when creating an account, the user shouldnt be able to immediately login, this is different than the dev?
-
-- create organization table
-- create organization user table
-
-
-
-- dont let admin user remove admin status from self or other admin users
-- tests for new components, also remember to create new tests anytime we make a new component or update an existing one
-
+x when creating an account, the user shouldnt be able to immediately login, this is different than the dev?
 
 x sorted attributes on status and priority dropdowns
 x sortable on all tickets table columns
 
-- remove timestamp from due date column either just on creation or out of database completely
 x ticket assignment at creation
 x ticket table shows creator name and assignee name (or none or name+x if there are multiple)
 x ticket select page needs general overhaul, but some kind of back button (close or otherwise)
@@ -23,20 +12,8 @@ x edits to tickets update ticket_history
 x add a sidebar to the selected ticket page that shows the comment history, and other history
 x format ticket select page, fill height instead of spilling out
 x in ticket activity and conversation sidebar, make the scroll bar start at the bottom, make the enter button auto send the message
-- add attachments to ticket activity
-- suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
-- assignment types, primary, secondary, watcher
-
-
-- media table
-- converstaions and activities both have media array type? or a second table that has media_id, conversation_id, activity_id (one has to be null)
-
-- ticket_conversations table
-- all messages between users and clients
-- add attachments to conversations
-- mentions in activity log
-- notifications in general (on sidebar?)
-- custom attributes on tickets, created in admin panel
+x ticket assignment to organization at creation
+x filter ticket table to only active organizations
 
 x create organization and organization_user tables, add is_customer bool to profile table
 x is_customer bool defaults to false, and existing records set to false
@@ -47,18 +24,13 @@ x organization_type table: id, name
 x organization_status table: id, name
     x seed in migrations - (in pipeline, under contract, cancelled, etc)
 
-- login as a customer
-    - build their sidebar
-        - dashboard
-        - tickets
-        - knowledge base
-        - help chat
-    
+x when a ticket is created (maybe not from UI)
+    x tickets require organization to be created
+    - priority is set to the default for the organization
+    x non is_active statuses, priorities, etc should not be selectable
+    x make organization_id be assigned to tickets
 
-- lock down data available to is_customer profiles
-- make organization_id be assigned to tickets
-
-- admin panel
+x admin panel
     x create ticket_statuses, priorities, organization_types, organization_statuses
     - create attributes (later)
     x organization management page
@@ -70,10 +42,71 @@ x organization_status table: id, name
         - invite users (to organizations or internal)
         x deactivate or make admin users
         x edit user details
-        - edit customer organization
+        x edit customer organization
         - cant disable admin on self
         - cant enable admin on customers
         - filter or sort users in table
+
+x team page (show all employees) visible to admins
+    x show a table of all non customers
+    x show open tickets, other stats
+    - how to see other users besides just admin and yourself?
+    - can select a user to view their profile page
+
+- profiles page (other users can view details)
+    - all tickets, etc
+
+- dont let admin user remove admin status from self or other admin users
+- tests for new components, also remember to create new tests anytime we make a new component or update an existing one
+- remove timestamp from due date column either just on creation or out of database completely
+- add attachments to ticket activity
+- suggested ai actions on tickets (respond with x, do y, etc) can use the knowledge base later on
+- assignment types, primary, secondary, watcher
+- media table
+- converstaions and activities both have media array type? or a second table that has media_id, conversation_id, activity_id (one has to be null)
+
+
+- ticket_conversations table
+    - all messages between users and clients
+    - add attachments to conversations
+- mentions in activity log
+- notifications in general (on sidebar?)
+- custom attributes on tickets, created in admin panel
+
+
+- login as a customer
+    - build their sidebar
+        - dashboard
+        - organization
+            - automatically brings them to their own organization detail page
+            - maybe dont show some of the details? priorities, statuses, etc, just tickets?
+        - tickets
+            - table of tickets for the organization
+            - they can create a new ticket, it will get auto assigned somehow
+            - they can see the ticket conversation history, send messages to it
+        - knowledge base
+        - help chat
+            - help chat, need to flesh this out on both ends
+            - eventually the ai will respond to messages
+            - tbd
+    - lock down data available to is_customer profiles
+
+
+
+ROBERT !!! FIRST THING TO DO FOR SOME REASON WE CANT SEE THE TICKETS OR USERS IN THE TABLE HERE
+- organization page (non customers can view, admins can edit)
+    x table of all visible organizations if not a customer
+        x as a non customer, you can select any of the organization pages to view
+        x if a customer, navigate directly to the organization select page
+    x show all users in the organization
+        - click a customer user to view their profile page
+    x show all tickets in the organization
+        x click a ticket to view its details
+    x show all details about the organization
+        x name, description, customer_since, total_contract, default_priority, status, type
+    x admins have ability to edit details (already in admin panel)
+
+
 - email invitation (admin can select an organization or internal and invite a user via email)
     - how to test?
     - additionally generate an invite code if they go directly to the signup page
@@ -81,26 +114,16 @@ x organization_status table: id, name
     - prefill the names, job title, and phone number in invite form (not required though)
     - basically seems like the same process as the signup page, but the admin kicks off the process instead of a signup
     - password reset???
+    
 
 
-- organization page (non customers can view, admins can edit)
-    - table of all visible organizations if not a customer
-        - as a non customer, you can select any of the organization pages to view
-        - if a customer, navigate directly to the organization select page
-    - show all users in the organization
-    - show all tickets in the organization
-    - show all details about the organization
-        - name, description, customer_since, total_contract, default_priority, status, type
-    - admins have ability to edit details
+
+
 
 - update rls for all the above (may need to strategize this with o1)
+    - replace the get_all_active_profiles function with something related to non customer profiles
 
-- when a ticket is created (maybe not from UI)
-    - priority is set to the default for the organization
-- non is_active statuses, priorities, etc should not be selectable
 
-- profiles page (other users can view details)
-    - open tickets, etc
 
 - default seed for organizations and organization_users (two orgs, one user in each)
 
@@ -120,11 +143,3 @@ x notification icon on sidebar
 
 - add db push to github actions
 - npm run build and test before deploy??? maybe taken care of on amplify?
-
-- on customer login, they can see their tickets they created (or maybe organization tickets)
-- they can create a new ticket, it will get auto assigned somehow
-- they can see the ticket conversation history, send messages to it
-- help chat, need to flesh this out on both ends
-    - eventually the ai will respond to messages
-    - tbd
-- they can see the knowledge base
