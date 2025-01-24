@@ -105,8 +105,12 @@ x knowledge base
         x set category
         x set public or private
 
+- customer view help chat button
+    - maybe a panel that shows all their help chat conversations
+    - well they can see them in their tickets
 
 - ticket_conversations table
+    - when customer sends a help chat message, it creates a ticket, and adds the message to the conversation
     - all messages between users and clients
     - add attachments to conversations
 - mentions in activity log
@@ -116,21 +120,26 @@ x knowledge base
 
 - login as a customer
     - build their sidebar
-        - dashboard
-        - organization
+        x dashboard
+        x organization
             - automatically brings them to their own organization detail page
             - maybe dont show some of the details? priorities, statuses, etc, just tickets?
-        - tickets
+        x tickets
             - table of tickets for the organization
             - they can create a new ticket, it will get auto assigned somehow
             - they can see the ticket conversation history, send messages to it
-        - knowledge base
-        - help chat
+        x knowledge base
+        x help chat bubble
             - help chat, need to flesh this out on both ends
             - eventually the ai will respond to messages
             - tbd
     - lock down data available to is_customer profiles
-
+        - can only select their own organization
+        - can only see their organization tickets
+        - can create/edit their ticket conversations
+        - can view profiles of other users in their org (is_active = true)
+        - can view profiles of employees (is_active = true)
+        - can view knowledge base articles (is_active = true)
 
 
 

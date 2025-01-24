@@ -19,7 +19,9 @@ export function Sidebar() {
       { path: '/team', label: 'Team', icon: isPowerMode ? '🎭' : '👥' }
     ]),
     { path: '/knowledge-base', label: 'Knowledge Base', icon: isPowerMode ? '🎪' : '📚' },
-    { path: '/reporting', label: 'Reporting', icon: isPowerMode ? '🌈' : '📊' },
+    ...(profile?.is_customer ? [] : [
+      { path: '/reporting', label: 'Reporting', icon: isPowerMode ? '🌈' : '📊' }
+    ]),
     ...(profile?.is_admin ? [
       { path: '/admin', label: 'Admin', icon: isPowerMode ? '👑' : '⚙️' }
     ] : [])
