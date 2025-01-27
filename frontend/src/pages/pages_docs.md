@@ -9,8 +9,8 @@ Authentication page handling user sign-in and sign-up.
 
 **Dependencies:**
 - React Router (`useNavigate`)
-- `ThemeContext` (for styling)
-- `ThemeToggle` component
+- `ThemeContext`
+- `UserContext`
 - Supabase client
 
 **API Interactions:**
@@ -26,193 +26,345 @@ Authentication page handling user sign-in and sign-up.
    ```typescript
    const { error } = await supabase.auth.signUp({
      email: string,
-     password: string
+     password: string,
+     options: {
+       data: {
+         first_name: string,
+         last_name: string
+       }
+     }
    })
    ```
-
-**State Management:**
-- Email and password form state
-- Loading state
-- Error state
 
 **Features:**
 - User authentication
 - Form validation
 - Error handling
-- Theme-aware styling
-- Responsive design
+- New user registration
+- Password reset flow
 
 ### `Welcome.tsx`
 Landing page for new users.
 
 **Dependencies:**
-- `UserContext` (for user data)
-- `ThemeContext` (for styling)
+- `UserContext`
+- `ThemeContext`
+- `PageContainer`
 
 **Features:**
 - Welcome message
-- Initial user guidance
-- Theme-aware styling
+- Getting started guide
+- Quick links to key features
+- Organization setup guidance
 
-## Main Application Pages
+## Core Pages
 
 ### `Dashboard.tsx`
 Main dashboard view after authentication.
 
 **Dependencies:**
-- `PageContainer` component
-- `UserContext` (for profile data)
-- `ThemeContext` (for styling)
+- `PageContainer`
+- `UserContext`
+- `ThemeContext`
+- `TicketTable` component
 
 **Features:**
-- Personalized welcome message
-- Loading state handling
-- Theme-aware styling
-- User profile display
+- Activity overview
+- Recent tickets
+- Key metrics display
+- Quick action buttons
 
-### `Admin.tsx`
-Administrative interface for user management.
+### `Tickets.tsx`
+Ticket management interface.
 
 **Dependencies:**
-- `UserContext` (for admin check)
-- `ThemeContext` (for styling)
-- Supabase client
-- Database types
+- `PageContainer`
+- `TicketTable` component
+- `CreateTicketPopout`
+- `UserContext`
 
 **API Interactions:**
-1. Fetch Users:
+- Ticket listing and filtering
+- Status updates
+- Assignment changes
+
+**Features:**
+- Ticket list view
+- Create new tickets
+- Filter and search
+- Bulk actions
+
+### `TicketDetail.tsx`
+Detailed ticket view and management.
+
+**Dependencies:**
+- `PageContainer`
+- `TicketActivitySidebar`
+- `EditTicketPopout`
+- `RichTextViewer`
+- `UserContext`
+
+**API Interactions:**
+1. Ticket Data:
    ```typescript
-   const { data, error } = await supabase
-     .from('profiles')
-     .select('*')
+   const { data: ticket } = await supabase
+     .from('tickets')
+     .select('*, assignee:profiles(*), customer:profiles(*), organization:organizations(*)')
+     .eq('id', ticketId)
+     .single()
+   ```
+
+2. Activity Updates:
+   ```typescript
+   const { data: activities } = await supabase
+     .from('ticket_activities')
+     .select('*, user:profiles(*)')
+     .eq('ticket_id', ticketId)
      .order('created_at', { ascending: false })
    ```
 
-2. Toggle Admin Status:
-   ```typescript
-   const { error } = await supabase
-     .from('profiles')
-     .update({ is_admin: boolean })
-     .eq('user_id', userId)
-   ```
-
-3. Toggle User Active Status:
-   ```typescript
-   const { error } = await supabase
-     .from('profiles')
-     .update({ is_active: boolean })
-     .eq('user_id', userId)
-   ```
-
-**State Management:**
-- Users list
-- Loading state
-- Admin status checks
-
 **Features:**
-- User management interface
-- Admin role toggle
-- User activation toggle
-- Sorted user list
-- Protected route (admin only)
-
-## Feature Pages (In Development)
+- Full ticket details
+- Activity timeline
+- Status management
+- Assignment handling
+- Customer communication
 
 ### `Customers.tsx`
 Customer management interface.
 
 **Dependencies:**
-- `PageContainer` component
-- `ThemeContext` (for styling)
+- `PageContainer`
+- `OrganizationTable`
+- `CreateOrganizationPopout`
+- `UserContext`
 
-**Status:** Initial implementation
+**API Interactions:**
+- Customer listing
+- Organization management
+- Contact information
 
-### `Tickets.tsx`
-Support ticket management interface.
+**Features:**
+- Customer directory
+- Organization management
+- Search and filtering
+- Quick actions
+
+### `CustomerDetail.tsx`
+Detailed customer view.
 
 **Dependencies:**
-- `PageContainer` component
-- `ThemeContext` (for styling)
+- `PageContainer`
+- `EditOrganizationPopout`
+- `TicketTable`
+- `UserContext`
 
-**Status:** Initial implementation
+**API Interactions:**
+1. Customer Data:
+   ```typescript
+   const { data: customer } = await supabase
+     .from('organizations')
+     .select('*, contacts:profiles(*), tickets(*)')
+     .eq('id', organizationId)
+     .single()
+   ```
+
+**Features:**
+- Organization details
+- Contact management
+- Ticket history
+- Activity timeline
+
+### `Team.tsx`
+Team management interface.
+
+**Dependencies:**
+- `PageContainer`
+- `UserTable`
+- `UserEditModal`
+- `UserContext`
+
+**API Interactions:**
+- Team member listing
+- Role management
+- Permission updates
+
+**Features:**
+- Team directory
+- Role management
+- Permission control
+- Activity monitoring
+
+## Knowledge Base
 
 ### `KnowledgeBase.tsx`
-Knowledge base and documentation interface.
+Knowledge base article listing.
 
 **Dependencies:**
-- `PageContainer` component
-- `ThemeContext` (for styling)
+- `PageContainer`
+- `RichTextViewer`
+- `UserContext`
 
-**Status:** Initial implementation
+**API Interactions:**
+1. Article Listing:
+   ```typescript
+   const { data: articles } = await supabase
+     .from('knowledge_base_articles')
+     .select('*, author:profiles(*), category:kb_categories(*)')
+     .order('created_at', { ascending: false })
+   ```
 
-### `Reporting.tsx`
-Analytics and reporting interface.
+**Features:**
+- Article listing
+- Category navigation
+- Search functionality
+- Create new articles
+
+### `KnowledgeBaseArticle.tsx`
+Article view component.
 
 **Dependencies:**
-- `PageContainer` component
-- `ThemeContext` (for styling)
+- `PageContainer`
+- `RichTextViewer`
+- `UserContext`
 
-**Status:** Initial implementation
+**API Interactions:**
+- Article content fetching
+- View tracking
+- Related articles
+
+### `NewKnowledgeBaseArticle.tsx`
+Article creation interface.
+
+**Dependencies:**
+- `PageContainer`
+- `RichTextEditor`
+- `UserContext`
+
+**API Interactions:**
+- Article creation
+- Category management
+- Media uploads
+
+### `EditKnowledgeBaseArticle.tsx`
+Article editing interface.
+
+**Dependencies:**
+- `PageContainer`
+- `RichTextEditor`
+- `UserContext`
+
+**API Interactions:**
+- Article updates
+- Version control
+- Media management
+
+## Admin Section
+
+### `Admin.tsx`
+Administrative dashboard.
+
+**Dependencies:**
+- `PageContainer`
+- `UserContext`
+- `ConfigItemManager`
+
+**Features:**
+- System configuration
+- User management
+- Settings control
+- Audit logging
+
+### Admin Pages
+Located in `/admin` directory:
+- Configuration management
+- System settings
+- Audit logs
+- Integration settings
 
 ## Page Relationships
 
-1. Authentication Flow:
+1. Navigation Flow:
    ```
-   Login → Dashboard
-        → Welcome (for new users)
+   Login → Welcome (new users)
+        → Dashboard (existing users)
+   
+   Dashboard
+   ├── Tickets → TicketDetail
+   ├── Customers → CustomerDetail
+   ├── Team
+   ├── KnowledgeBase
+   │   ├── KnowledgeBaseArticle
+   │   ├── NewKnowledgeBaseArticle
+   │   └── EditKnowledgeBaseArticle
+   └── Admin (admin users only)
    ```
 
-2. Navigation Structure:
+2. Data Flow:
    ```
-   Dashboard
-   ├── Customers
-   ├── Tickets
-   ├── KnowledgeBase
-   ├── Reporting
-   └── Admin (if user is admin)
+   Customers ←→ CustomerDetail
+              ↓
+   Tickets ←→ TicketDetail
+           ↓
+   KnowledgeBase ←→ Articles
    ```
 
 ## Common Patterns
 
 1. Protected Routes:
-   - All pages except Login require authentication
-   - Admin page requires admin role
-   - Redirect to login if unauthenticated
+   ```typescript
+   const ProtectedRoute = ({ children }) => {
+     const { profile, loading } = useUser()
+     if (loading) return <Loading />
+     if (!profile) return <Navigate to="/login" />
+     return children
+   }
+   ```
 
-2. Layout Structure:
-   - All authenticated pages use `PageContainer`
-   - Consistent header and navigation
-   - Theme-aware styling
+2. Permission Checks:
+   ```typescript
+   const AdminRoute = ({ children }) => {
+     const { hasPermission } = useUser()
+     if (!hasPermission('admin')) return <AccessDenied />
+     return children
+   }
+   ```
 
 3. Data Loading:
-   - Loading states during data fetch
-   - Error handling for API calls
-   - Optimistic updates where applicable
+   ```typescript
+   const [loading, setLoading] = useState(true)
+   const [error, setError] = useState<Error | null>(null)
+   const [data, setData] = useState<Data | null>(null)
+
+   useEffect(() => {
+     fetchData()
+       .then(setData)
+       .catch(setError)
+       .finally(() => setLoading(false))
+   }, [])
+   ```
 
 ## Important Notes
 
 1. Authentication:
-   - Login page handles both sign-in and sign-up
-   - Auth state managed through UserContext
-   - Protected route redirects
+   - All pages except Login require authentication
+   - Admin section requires specific permissions
+   - Session management handled by UserContext
 
-2. Admin Access:
-   - Admin page checks user role
-   - Admin functions properly typed
-   - Secure API calls
+2. Data Management:
+   - Real-time updates where applicable
+   - Optimistic UI updates
+   - Proper error handling
+   - Loading states
 
-3. Error Handling:
-   - Form validation
-   - API error handling
-   - User feedback
-
-4. Performance:
-   - Lazy loading where applicable
-   - Optimized re-renders
+3. Performance:
+   - Route-based code splitting
+   - Lazy loading of heavy components
+   - Optimized data fetching
    - Proper cleanup
 
-5. Styling:
-   - Theme context integration
-   - Power mode variations
-   - Responsive design
-   - Consistent UI patterns 
+4. Error Handling:
+   - API error management
+   - User feedback
+   - Fallback UI
+   - Recovery options 

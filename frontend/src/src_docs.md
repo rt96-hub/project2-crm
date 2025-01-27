@@ -53,104 +53,94 @@ This document provides a detailed overview of the `src/` directory structure, in
 ### `pages/`
 Main route components that represent different views in the application.
 
-- `Login.tsx`
-  - Authentication page
-  - Dependencies: UserContext, Supabase
-  - Handles user login/signup flows
+- Core Pages:
+  - `Dashboard.tsx`: Main dashboard view
+  - `Login.tsx`: Authentication and user login
+  - `Welcome.tsx`: Landing/onboarding page
+  - `Tickets.tsx`: Ticket management interface
+  - `TicketDetail.tsx`: Detailed ticket view and management
+  - `Customers.tsx`: Customer management interface
+  - `CustomerDetail.tsx`: Detailed customer view and management
+  - `Team.tsx`: Team management interface
+  - `Reporting.tsx`: Analytics and reporting interface
 
-- `Dashboard.tsx`
-  - Main dashboard view
-  - Dependencies: DashboardLayout, PageContainer
-  - Entry point after authentication
+- Knowledge Base:
+  - `KnowledgeBase.tsx`: Knowledge base article listing
+  - `KnowledgeBaseArticle.tsx`: Article view component
+  - `NewKnowledgeBaseArticle.tsx`: Article creation
+  - `EditKnowledgeBaseArticle.tsx`: Article editing
 
-- `Admin.tsx`
-  - Administrative interface
-  - Dependencies: UserContext, DashboardLayout
-  - Manages user and system settings
+- Admin Section:
+  - `Admin.tsx`: Administrative dashboard
+  - Contains admin-specific configuration pages
 
-- `Customers.tsx`, `Reporting.tsx`, `KnowledgeBase.tsx`, `Tickets.tsx`
-  - Core CRM functionality pages
-  - Dependencies: DashboardLayout, PageContainer
-  - Currently in initial implementation phase
-
-- `Welcome.tsx`
-  - Landing/onboarding page
-  - Dependencies: UserContext
-  - First-time user experience
+- Test Directory:
+  - `__tests__/`: Contains page component tests
 
 ### `components/`
 Reusable UI components used across multiple pages.
 
-- `DashboardLayout.tsx`
-  - Main layout wrapper
-  - Dependencies: Sidebar, ThemeContext
-  - Depended on by: All authenticated pages
-  - Provides consistent layout structure
+- Layout Components:
+  - `DashboardLayout.tsx`: Main application layout wrapper
+  - `PageContainer.tsx`: Standard page container
+  - `Sidebar.tsx`: Main navigation sidebar
+  - `ConversationSidebar.tsx`: Chat/messaging sidebar
+  - `TicketActivitySidebar.tsx`: Ticket activity tracking
 
-- `Sidebar.tsx`
-  - Navigation component
-  - Dependencies: UserContext, ThemeContext
-  - Depended on by: DashboardLayout
-  - Handles main navigation and user context
+- Ticket Management:
+  - `TicketTable.tsx`: Ticket listing and management
+  - `CreateTicketPopout.tsx`: Ticket creation modal
+  - `EditTicketPopout.tsx`: Ticket editing modal
 
-- `ProfilePopout.tsx`
-  - User profile menu
-  - Dependencies: UserContext, Supabase
-  - Handles user-specific actions and settings
+- Organization Management:
+  - `OrganizationTable.tsx`: Organization listing
+  - `CreateOrganizationPopout.tsx`: Organization creation
+  - `EditOrganizationPopout.tsx`: Organization editing
 
-- `ThemeToggle.tsx`
-  - Theme switching component
-  - Dependencies: ThemeContext
-  - Controls light/dark mode
+- User Management:
+  - `UserTable.tsx`: User listing and management
+  - `UserEditModal.tsx`: User editing interface
+  - `ProfilePopout.tsx`: User profile management
 
-- `PageContainer.tsx`
-  - Standard page wrapper
-  - Dependencies: None
-  - Provides consistent padding and layout
+- Rich Text Components:
+  - `RichTextEditor.tsx`: Rich text editing component
+  - `RichTextViewer.tsx`: Rich text display component
+
+- Utility Components:
+  - `ThemeToggle.tsx`: Theme switching
+  - `HelpChatBubble.tsx`: Help interface
+  - `ConfigItemManager.tsx`: Configuration management
+
+- Test Directory:
+  - `__tests__/`: Component test files
 
 ### `context/`
 React Context providers for global state management.
 
 - `UserContext.tsx`
   - Authentication and user state management
-  - Dependencies: Supabase, React
-  - Depended on by: Most components
-  - Provides:
-    - User authentication state
-    - Login/logout functions
-    - User profile data
+  - User profile and permissions
+  - Login/logout functionality
 
 - `ThemeContext.tsx`
   - Theme state management
-  - Dependencies: React
-  - Depended on by: UI components
-  - Manages light/dark mode preferences
+  - Light/dark mode preferences
 
 ### `lib/`
 Utility functions and service configurations.
 
 - `supabase.ts`
   - Supabase client configuration
-  - Dependencies: @supabase/supabase-js
-  - Depended on by: UserContext, API calls
-  - Initializes and exports Supabase client
+  - Database connection setup
+  - Authentication services
 
 ### `types/`
 TypeScript type definitions.
 
 - `database.types.ts`
-  - Database schema types
-  - Dependencies: Supabase types
-  - Depended on by: All components using database data
-  - Contains:
-    - Table definitions
-    - Custom type utilities
-    - Database schema interfaces
-
-### `assets/`
-Static assets used throughout the application.
-- Contains images, icons, and other media files
-- Used by components and pages for visual elements
+  - Comprehensive database schema types
+  - Table interfaces and relationships
+  - Custom type utilities
 
 ## Key Dependencies and Relationships
 
@@ -165,6 +155,10 @@ Static assets used throughout the application.
 3. Theme Management:
    - ThemeContext → ThemeToggle → All themed components
    - Ensures consistent styling across the application
+
+4. Data Management:
+   - Ticket/Organization/User components → Supabase
+   - CRUD operations through modals and forms
 
 ## Important Notes
 
@@ -183,7 +177,7 @@ Static assets used throughout the application.
    - Database types are auto-generated from Supabase schema
    - Strict type checking is enabled
 
-4. Routing:
-   - React Router handles navigation
-   - Protected routes require authentication
-   - Sidebar provides main navigation structure 
+4. Testing:
+   - Test directories present in components and pages
+   - Component and page-level testing implemented
+   - Setup configured in setupTests.ts 

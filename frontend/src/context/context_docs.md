@@ -21,6 +21,8 @@ type UserContextType = {
   loading: boolean
   error: string | null
   updateProfile: (updates: Partial<Profile>) => Promise<void>
+  isAdmin: boolean
+  hasPermission: (permission: string) => boolean
 }
 ```
 
@@ -32,66 +34,98 @@ type UserContextType = {
 
 ### API Interactions
 
-1. Profile Fetching:
+1. Profile Management:
    ```typescript
-   // Get current user
-   const { data: { user } } = await supabase.auth.getUser()
-   
-   // Fetch profile data
+   // Fetch profile
    const { data, error } = await supabase
      .from('profiles')
-     .select('*')
+     .select('*, organizations(*)')
      .eq('user_id', user.id)
      .single()
-   ```
 
-2. Profile Updates:
-   ```typescript
+   // Update profile
    const { error } = await supabase
      .from('profiles')
      .update(updates)
      .eq('user_id', profile.user_id)
    ```
 
-3. Authentication State:
+2. Authentication:
    ```typescript
-   // Subscribe to auth changes
-   supabase.auth.onAuthStateChange(() => {
-     fetchProfile()
+   // Auth state changes
+   supabase.auth.onAuthStateChange(async (event, session) => {
+     if (event === 'SIGNED_IN') {
+       await fetchProfile()
+     }
+     if (event === 'SIGNED_OUT') {
+       setProfile(null)
+     }
    })
+   ```
+
+3. Permission Management:
+   ```typescript
+   // Permission checks
+   const hasPermission = (permission: string) => {
+     return profile?.permissions?.includes(permission) || isAdmin
+   }
    ```
 
 ### State Management
 
-- `profile`: Current user's profile data
+- `profile`: Current user's profile data including organization relationships
 - `loading`: Loading state for async operations
 - `error`: Error state for failed operations
+- `isAdmin`: Admin status of current user
+- `hasPermission`: Function to check user permissions
 - `updateProfile`: Function to update user profile
 
-### Used By
+### Used By Components
 
-- `ProfilePopout` component
-- `Sidebar` component (for admin status)
-- Protected routes (for authentication)
-- Any component needing user data
+#### Core Layout
+- `DashboardLayout` (auth protection)
+- `Sidebar` (navigation permissions)
+- `ProfilePopout` (profile management)
+
+#### Ticket Management
+- `TicketTable` (permissions, assignments)
+- `CreateTicketPopout` (user assignment)
+- `EditTicketPopout` (permissions)
+- `TicketActivitySidebar` (user actions)
+
+#### Organization Management
+- `OrganizationTable` (permissions)
+- `CreateOrganizationPopout` (user association)
+- `EditOrganizationPopout` (permissions)
+
+#### User Management
+- `UserTable` (admin functions)
+- `UserEditModal` (permissions)
+- `Team` page (user management)
+
+#### Knowledge Base
+- Knowledge base components (edit permissions)
+- Article management (creation/editing rights)
 
 ### Important Notes
 
 1. Authentication Flow:
-   - Automatically fetches profile on mount
-   - Subscribes to auth state changes
-   - Updates profile in real-time
-   - Handles error states
+   - Real-time auth state synchronization
+   - Automatic profile fetching on auth changes
+   - Organization relationship management
+   - Permission-based access control
 
 2. Error Handling:
    - Typed error messages
-   - Proper error propagation
    - Loading state management
+   - Failed operation recovery
+   - Session expiration handling
 
 3. Performance:
    - Memoized context value
-   - Cleanup of auth subscriptions
-   - Optimized re-renders
+   - Optimized permission checks
+   - Efficient profile updates
+   - Cleanup of subscriptions
 
 ## Theme Context (`ThemeContext.tsx`)
 
@@ -105,39 +139,78 @@ Global theme management for the application.
 ### Types
 
 ```typescript
+type Theme = 'light' | 'dark'
+
 type ThemeContextType = {
-  isPowerMode: boolean
+  theme: Theme
   toggleTheme: () => void
+  isDark: boolean
 }
 ```
 
 ### Dependencies
 
-- React (createContext, useState)
+- React (createContext, useState, useEffect)
+- Local storage for persistence
 
 ### State Management
 
-- `isPowerMode`: Current theme state
-- `toggleTheme`: Function to toggle theme
+- `theme`: Current theme ('light' | 'dark')
+- `isDark`: Computed boolean for dark mode
+- `toggleTheme`: Function to switch themes
 
-### Used By
+### Used By Components
 
-- `DashboardLayout`
-- `Sidebar`
-- `ProfilePopout`
-- `ThemeToggle`
-- Any component with theme-specific styling
+#### Layout Components
+- `DashboardLayout` (theme application)
+- `PageContainer` (styling)
+- `Sidebar` (theme-based styling)
+
+#### UI Components
+- `ThemeToggle` (theme switching)
+- All form components (styling)
+- Modal components (theme-based overlays)
+
+#### Content Components
+- `RichTextEditor` (theme-based styling)
+- `RichTextViewer` (content display)
+- Table components (styling)
+
+### Features
+
+1. Theme Persistence:
+   ```typescript
+   // Load theme from storage
+   const storedTheme = localStorage.getItem('theme') as Theme
+   
+   // Save theme changes
+   useEffect(() => {
+     localStorage.setItem('theme', theme)
+   }, [theme])
+   ```
+
+2. System Preference Detection:
+   ```typescript
+   // Check system preference
+   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
+   
+   // Listen for system changes
+   prefersDark.addEventListener('change', handleSystemThemeChange)
+   ```
 
 ### Important Notes
 
 1. Theme Implementation:
-   - Simple boolean toggle
-   - No persistent storage (resets on refresh)
-   - Synchronous updates
+   - System preference detection
+   - Local storage persistence
+   - Real-time updates
+   - Smooth transitions
 
 2. Performance:
    - Minimal re-renders
-   - Lightweight state
+   - Efficient theme switching
+   - Proper cleanup of listeners
+   - Optimized style updates
 
 ## Context Usage Patterns
 
@@ -153,51 +226,47 @@ type ThemeContextType = {
 2. Hook Usage:
    ```tsx
    function MyComponent() {
-     const { profile, updateProfile } = useUser()
-     const { isPowerMode } = useTheme()
-     // ...
+     const { profile, hasPermission } = useUser()
+     const { isDark, toggleTheme } = useTheme()
+     // Component logic
    }
    ```
 
-3. Error Boundaries:
-   - Providers include error checking
-   - Hooks throw if used outside provider
+3. Permission Checks:
+   ```tsx
+   function ProtectedComponent() {
+     const { hasPermission } = useUser()
+     
+     if (!hasPermission('required_permission')) {
+       return <AccessDenied />
+     }
+     
+     return <Component />
+   }
+   ```
 
 ## Best Practices
 
 1. Context Access:
-   - Always use provided hooks
-   - Never access context directly
-   - Handle loading and error states
-
-2. Updates:
-   - Batch related updates
-   - Handle optimistic updates
-   - Provide proper error feedback
-
-3. Type Safety:
-   - All contexts are fully typed
-   - Type inference for hooks
-   - Runtime type checking
-
-## Important Implementation Details
-
-1. Authentication:
-   - Real-time sync with Supabase
-   - Automatic profile fetching
-   - Proper cleanup on unmount
+   - Use provided hooks exclusively
+   - Handle loading states appropriately
+   - Implement proper error boundaries
+   - Check permissions before operations
 
 2. State Updates:
-   - Atomic updates
-   - Proper error handling
-   - Loading state management
+   - Use optimistic updates where appropriate
+   - Batch related changes
+   - Handle error states gracefully
+   - Provide user feedback
 
-3. Performance Considerations:
-   - Minimized context updates
-   - Proper cleanup
-   - Optimized re-renders
+3. Type Safety:
+   - Maintain strict typing
+   - Use proper type guards
+   - Implement runtime checks
+   - Keep types in sync with API
 
-4. Error Handling:
-   - Typed error messages
-   - Proper error propagation
-   - User-friendly error states 
+4. Performance:
+   - Minimize context updates
+   - Use proper memoization
+   - Implement efficient cleanup
+   - Optimize re-renders 

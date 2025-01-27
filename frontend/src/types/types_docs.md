@@ -21,48 +21,80 @@ type Json =
 ```
 
 #### `Database`
-Main database schema type containing all tables, views, and functions:
-```typescript
-type Database = {
-  public: {
-    Tables: {
-      priorities: PriorityTable
-      profiles: ProfileTable
-      statuses: StatusTable
-      ticket_assignments: TicketAssignmentTable
-      ticket_comments: TicketCommentTable
-      ticket_history: TicketHistoryTable
-      tickets: TicketTable
-    }
-    Functions: {
-      get_all_active_profiles: ProfileFunction
-      get_ticket_assignees: TicketAssigneeFunction
-      is_admin: AdminCheckFunction
-    }
-  }
-}
-```
+Main database schema type containing all tables, views, and functions.
 
 ### Table Definitions
 
-#### Profiles Table
+#### Knowledge Base
 ```typescript
-type ProfileRow = {
+// Articles
+type KnowledgeBaseArticle = {
+  body: string
+  category_id: string
   created_at: string
-  email: string
-  first_name: string | null
-  is_active: boolean | null
-  is_admin: boolean | null
-  job_title: string | null
-  last_name: string | null
-  user_id: string
-  work_phone: string | null
+  creator_id: string
+  edited_at: string
+  id: string
+  is_active: boolean
+  is_public: boolean
+  name: string
+}
+
+// Categories
+type KnowledgeBaseCategory = {
+  created_at: string
+  id: string
+  is_active: boolean
+  name: string
 }
 ```
 
-#### Tickets Table
+#### Organizations
 ```typescript
-type TicketRow = {
+// Organization
+type Organization = {
+  created_at: string
+  customer_since: string | null
+  customer_status_id: string | null
+  customer_type_id: string | null
+  default_priority_id: string | null
+  description: string | null
+  id: string
+  is_active: boolean
+  name: string
+  total_contract: number | null
+  updated_at: string
+}
+
+// Organization Users
+type OrganizationUser = {
+  created_at: string
+  id: string
+  organization_id: string
+  profile_id: string
+}
+
+// Organization Status
+type OrganizationStatus = {
+  created_at: string
+  id: string
+  is_active: boolean
+  name: string
+}
+
+// Organization Type
+type OrganizationType = {
+  created_at: string
+  id: string
+  is_active: boolean
+  name: string
+}
+```
+
+#### Tickets
+```typescript
+// Ticket
+type Ticket = {
   created_at: string
   creator_id: string
   custom_fields: Json | null
@@ -76,11 +108,20 @@ type TicketRow = {
   title: string
   updated_at: string
 }
-```
 
-#### Ticket Comments Table
-```typescript
-type TicketCommentRow = {
+// Ticket Assignment
+type TicketAssignment = {
+  assignment_type: string
+  created_at: string
+  id: string
+  profile_id: string | null
+  team_id: string | null
+  ticket_id: string
+  updated_at: string
+}
+
+// Ticket Comment
+type TicketComment = {
   author_id: string
   content: string
   created_at: string
@@ -89,11 +130,18 @@ type TicketCommentRow = {
   ticket_id: string
   updated_at: string
 }
-```
 
-#### Ticket History Table
-```typescript
-type TicketHistoryRow = {
+// Ticket Conversation
+type TicketConversation = {
+  created_at: string
+  id: string
+  profile_id: string
+  text: string
+  ticket_id: string
+}
+
+// Ticket History
+type TicketHistory = {
   action: string
   actor_id: string
   changes: Json
@@ -103,21 +151,63 @@ type TicketHistoryRow = {
 }
 ```
 
-### Database Functions
-
-#### `get_all_active_profiles`
-Returns all active user profiles:
+#### Users and Profiles
 ```typescript
-type ProfileFunction = {
-  Args: Record<PropertyKey, never>
-  Returns: ProfileRow[]
+type Profile = {
+  created_at: string
+  email: string
+  first_name: string | null
+  is_active: boolean | null
+  is_admin: boolean | null
+  is_customer: boolean | null
+  job_title: string | null
+  last_name: string | null
+  user_id: string
+  work_phone: string | null
 }
 ```
 
-#### `get_ticket_assignees`
-Returns assignee information for given tickets:
+#### Configuration Types
 ```typescript
-type TicketAssigneeFunction = {
+// Priority
+type Priority = {
+  created_at: string
+  id: string
+  is_active: boolean
+  name: string
+}
+
+// Status
+type Status = {
+  created_at: string
+  id: string
+  is_active: boolean
+  is_counted_open: boolean
+  name: string
+}
+```
+
+### Database Functions
+
+#### User Management
+```typescript
+// Get Active Employees
+type GetAllActiveEmployeeProfiles = {
+  Args: Record<PropertyKey, never>
+  Returns: Profile[]
+}
+
+// Check Admin Status
+type IsAdmin = {
+  Args: Record<PropertyKey, never>
+  Returns: boolean
+}
+```
+
+#### Ticket Management
+```typescript
+// Get Ticket Assignees
+type GetTicketAssignees = {
   Args: {
     ticket_ids: string[]
   }
@@ -128,41 +218,40 @@ type TicketAssigneeFunction = {
     last_name: string
   }[]
 }
-```
 
-#### `is_admin`
-Checks if current user is an admin:
-```typescript
-type AdminCheckFunction = {
+// Get Open Ticket Counts
+type GetEmployeeOpenTicketCounts = {
   Args: Record<PropertyKey, never>
-  Returns: boolean
+  Returns: {
+    profile_id: string
+    count: number
+  }[]
+}
+
+type GetOrganizationOpenTicketCounts = {
+  Args: Record<PropertyKey, never>
+  Returns: {
+    organization_id: string
+    count: number
+  }[]
 }
 ```
 
-### Utility Types
+### Type Helpers
 
-#### `Tables<T>`
-Type helper for accessing table row types:
+#### Table Operations
 ```typescript
-// Usage example:
-type UserProfile = Tables<'profiles'>
-type Ticket = Tables<'tickets'>
-```
+// Get Row Type
+type TableRow<T extends keyof Database['public']['Tables']> = 
+  Database['public']['Tables'][T]['Row']
 
-#### `TablesInsert<T>`
-Type helper for table insertion operations:
-```typescript
-// Usage example:
-type NewProfile = TablesInsert<'profiles'>
-type NewTicket = TablesInsert<'tickets'>
-```
+// Insert Type
+type TableInsert<T extends keyof Database['public']['Tables']> = 
+  Database['public']['Tables'][T]['Insert']
 
-#### `TablesUpdate<T>`
-Type helper for table update operations:
-```typescript
-// Usage example:
-type ProfileUpdates = TablesUpdate<'profiles'>
-type TicketUpdates = TablesUpdate<'tickets'>
+// Update Type
+type TableUpdate<T extends keyof Database['public']['Tables']> = 
+  Database['public']['Tables'][T]['Update']
 ```
 
 ## Type Usage Patterns
@@ -170,91 +259,142 @@ type TicketUpdates = TablesUpdate<'tickets'>
 ### Database Operations
 
 1. Querying Data:
-   ```typescript
-   type TicketResponse = {
-     data: Tables<'tickets'> | null
-     error: Error | null
-   }
-   ```
+```typescript
+// Single Record
+const getTicket = async (id: string) => {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select<'tickets', Ticket>()
+    .eq('id', id)
+    .single()
+  return { data, error }
+}
+
+// Multiple Records with Relations
+const getTicketsWithAssignees = async () => {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select(`
+      *,
+      assignee:profiles(*),
+      organization:organizations(*)
+    `)
+  return { data, error }
+}
+```
 
 2. Inserting Data:
-   ```typescript
-   const newTicket: TablesInsert<'tickets'> = {
-     title: string,
-     creator_id: string,
-     priority_id: string,
-     status_id: string
-     // Optional fields
-   }
-   ```
+```typescript
+// New Ticket
+const createTicket = async (ticket: TableInsert<'tickets'>) => {
+  const { data, error } = await supabase
+    .from('tickets')
+    .insert(ticket)
+    .select()
+    .single()
+  return { data, error }
+}
+```
 
 3. Updating Data:
-   ```typescript
-   const updates: TablesUpdate<'tickets'> = {
-     title?: string,
-     description?: string,
-     // All fields optional
-   }
-   ```
+```typescript
+// Update Ticket
+const updateTicket = async (id: string, updates: TableUpdate<'tickets'>) => {
+  const { data, error } = await supabase
+    .from('tickets')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  return { data, error }
+}
+```
 
 ### Type Safety
 
-1. Null Handling:
-   ```typescript
-   // Example: Safe profile access
-   const name = profile?.first_name ?? 'Anonymous'
-   ```
+1. Type Guards:
+```typescript
+const isTicket = (data: unknown): data is Ticket => {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'id' in data &&
+    'title' in data
+  )
+}
+```
 
-2. Type Guards:
-   ```typescript
-   // Example: Admin check
-   const isAdmin = (profile: Tables<'profiles'>): boolean => {
-     return profile.is_admin ?? false
-   }
-   ```
+2. Null Handling:
+```typescript
+const getFullName = (profile: Profile): string => {
+  return [profile.first_name, profile.last_name]
+    .filter(Boolean)
+    .join(' ') || 'Unknown'
+}
+```
 
 ## Best Practices
 
 1. Type Imports:
-   ```typescript
-   import type { Database } from '../types/database.types'
-   type Profile = Database['public']['Tables']['profiles']['Row']
-   ```
+```typescript
+import type { Database } from '../types/database.types'
+type Profile = Database['public']['Tables']['profiles']['Row']
+```
 
-2. Type Assertions:
-   ```typescript
-   // Avoid
-   const profile = data as Profile
-   
-   // Prefer
-   if (isProfile(data)) {
-     // data is typed as Profile
-   }
-   ```
+2. Type Guards:
+```typescript
+// Use type predicates
+function isValidTicket(data: unknown): data is Ticket {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'id' in data &&
+    'title' in data
+  )
+}
+
+// Use with error handling
+try {
+  if (!isValidTicket(data)) {
+    throw new Error('Invalid ticket data')
+  }
+  // data is typed as Ticket
+} catch (error) {
+  // Handle error
+}
+```
 
 3. Null Safety:
-   - Always handle nullable fields
-   - Use optional chaining
-   - Provide fallback values
+```typescript
+// Use nullish coalescing
+const status = ticket.status_id ?? 'default'
+
+// Use optional chaining
+const orgName = ticket.organization?.name ?? 'No Organization'
+```
 
 ## Important Notes
 
 1. Type Generation:
-   - Types are auto-generated from Supabase
-   - Don't modify generated types manually
-   - Update by regenerating from schema
+   - Types are auto-generated from Supabase schema
+   - Run generation after schema changes
+   - Never modify generated types manually
+   - Keep types in sync with database
 
 2. Type Safety:
-   - Full TypeScript support
-   - Runtime type checking needed
-   - Handle nullable fields
+   - Use strict TypeScript configuration
+   - Implement proper type guards
+   - Handle null/undefined cases
+   - Validate data at runtime
 
 3. Performance:
    - Types are development-only
    - No runtime overhead
-   - Helps prevent bugs
+   - Help prevent bugs
+   - Improve maintainability
 
-4. Maintenance:
-   - Update types when schema changes
-   - Keep in sync with database
-   - Version control with schema 
+4. Relationships:
+   - Use proper join types
+   - Handle nested data properly
+   - Consider circular dependencies
+   - Document complex relationships 

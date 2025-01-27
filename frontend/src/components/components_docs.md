@@ -10,8 +10,7 @@ Main layout wrapper for authenticated pages.
 **Dependencies:**
 - React Router (`Outlet`)
 - `Sidebar` component
-- `ThemeContext` (for power mode styling)
-- `ThemeToggle` component
+- `ThemeContext` (for theme styling)
 
 **Used by:**
 - All authenticated route components
@@ -21,7 +20,6 @@ Main layout wrapper for authenticated pages.
 - Provides consistent layout structure
 - Handles responsive sidebar integration
 - Manages theme-based styling
-- Renders the main content area with proper spacing
 
 ### `PageContainer.tsx`
 Standard wrapper for page content.
@@ -30,17 +28,9 @@ Standard wrapper for page content.
 - `title: string` - Page title
 - `children: React.ReactNode` - Page content
 
-**Dependencies:**
-- None (pure presentational component)
-
 **Used by:**
 - Individual page components
 - Any component needing consistent page styling
-
-**Functionality:**
-- Provides consistent padding and styling
-- Renders page title with standard formatting
-- Ensures consistent content layout
 
 ## Navigation Components
 
@@ -50,8 +40,8 @@ Main navigation component.
 **Dependencies:**
 - React Router (`Link`, `useLocation`)
 - `ProfilePopout` component
-- `ThemeContext` (for power mode styling)
-- `UserContext` (for user profile and admin status)
+- `ThemeContext`
+- `UserContext`
 
 **Used by:**
 - `DashboardLayout`
@@ -60,67 +50,300 @@ Main navigation component.
 - Manages profile popout visibility
 - Tracks current route for active highlighting
 
-**Functionality:**
-- Renders navigation menu
-- Handles route navigation
-- Shows/hides admin options based on user role
-- Manages profile popout interaction
-- Provides power mode styling variations
-
-## User Interface Components
-
-### `ProfilePopout.tsx`
-User profile management component.
+### `ConversationSidebar.tsx`
+Chat and messaging interface sidebar.
 
 **Dependencies:**
-- React Router (`useNavigate`)
-- `UserContext` (for profile data and updates)
-- `ThemeContext` (for power mode styling)
-- Supabase client (for authentication)
+- `UserContext`
+- `database.types` (for message types)
+- Supabase real-time subscriptions
+
+**Used by:**
+- Ticket detail pages
+- Customer interaction views
+
+**API Interactions:**
+- Real-time message updates
+- Message history fetching
+- User presence tracking
+
+### `TicketActivitySidebar.tsx`
+Ticket activity tracking sidebar.
+
+**Dependencies:**
+- `database.types` (for activity types)
+- `UserContext`
+- `RichTextViewer` component
+
+**Used by:**
+- `TicketDetail` page
+
+**API Interactions:**
+- Activity log fetching
+- Real-time activity updates
+- Comment management
+
+## Ticket Management Components
+
+### `TicketTable.tsx`
+Ticket listing and management interface.
+
+**Dependencies:**
+- `database.types` (for ticket types)
+- `UserContext`
+- `ConfigItemManager`
+
+**Used by:**
+- `Tickets` page
+- `CustomerDetail` page
+
+**API Interactions:**
+- Ticket listing and filtering
+- Status updates
+- Assignment changes
+
+### `CreateTicketPopout.tsx`
+Ticket creation modal.
+
+**Dependencies:**
+- `RichTextEditor` component
+- `database.types`
+- `UserContext`
+- `ConfigItemManager`
+
+**Used by:**
+- `Tickets` page
+- `CustomerDetail` page
+
+**API Interactions:**
+- Ticket creation
+- Customer lookup
+- File attachments
+
+### `EditTicketPopout.tsx`
+Ticket editing modal.
+
+**Dependencies:**
+- `RichTextEditor` component
+- `database.types`
+- `UserContext`
+- `ConfigItemManager`
+
+**Used by:**
+- `TicketDetail` page
+
+**API Interactions:**
+- Ticket updates
+- Status changes
+- Assignment modifications
+
+## Organization Management Components
+
+### `OrganizationTable.tsx`
+Organization listing and management.
+
+**Dependencies:**
+- `database.types` (for organization types)
+- `UserContext`
+
+**Used by:**
+- `Customers` page
+
+**API Interactions:**
+- Organization listing
+- Search and filtering
+- Basic organization updates
+
+### `CreateOrganizationPopout.tsx`
+Organization creation modal.
+
+**Dependencies:**
+- `database.types`
+- `UserContext`
+
+**Used by:**
+- `Customers` page
+
+**API Interactions:**
+- Organization creation
+- Contact information validation
+- Address verification
+
+### `EditOrganizationPopout.tsx`
+Organization editing modal.
+
+**Dependencies:**
+- `database.types`
+- `UserContext`
+
+**Used by:**
+- `CustomerDetail` page
+
+**API Interactions:**
+- Organization updates
+- Contact management
+- Address updates
+
+## User Management Components
+
+### `UserTable.tsx`
+User listing and management interface.
+
+**Dependencies:**
+- `database.types` (for user types)
+- `UserContext`
+- `UserEditModal`
+
+**Used by:**
+- `Team` page
+- Admin interfaces
+
+**API Interactions:**
+- User listing
+- Role management
+- Status updates
+
+### `UserEditModal.tsx`
+User editing interface.
+
+**Dependencies:**
+- `database.types`
+- `UserContext`
+
+**Used by:**
+- `UserTable` component
+- Admin interfaces
+
+**API Interactions:**
+- User profile updates
+- Permission management
+- Role assignments
+
+### `ProfilePopout.tsx`
+User profile management.
+
+**Dependencies:**
+- `UserContext`
+- `ThemeContext`
+- Supabase auth
 
 **Used by:**
 - `Sidebar` component
 
-**State Management:**
-- Manages edit mode state
-- Handles form data for profile updates
-
 **API Interactions:**
-1. Profile Updates:
-   ```typescript
-   updateProfile({
-     first_name: string,
-     last_name: string,
-     work_phone: string,
-     job_title: string
-   })
-   ```
-2. Authentication:
-   ```typescript
-   supabase.auth.signOut()
-   ```
+- Profile updates
+- Password changes
+- Preference management
 
-**Functionality:**
-- Displays user profile information
-- Provides profile editing interface
-- Handles logout functionality
-- Shows preferences and support options
-- Implements power mode styling variations
+## Rich Text Components
+
+### `RichTextEditor.tsx`
+Rich text editing component.
+
+**Dependencies:**
+- External rich text editor library
+- `database.types` (for content types)
+
+**Used by:**
+- `CreateTicketPopout`
+- `EditTicketPopout`
+- Knowledge base components
+
+### `RichTextViewer.tsx`
+Rich text display component.
+
+**Dependencies:**
+- External rich text viewer library
+
+**Used by:**
+- `TicketActivitySidebar`
+- Knowledge base components
+- Ticket detail views
+
+## Utility Components
 
 ### `ThemeToggle.tsx`
 Theme switching component.
 
 **Dependencies:**
-- `ThemeContext` (for theme state and toggle)
+- `ThemeContext`
 
 **Used by:**
 - `DashboardLayout`
 
-**Functionality:**
-- Toggles between regular and power mode
-- Provides visual feedback for current theme
-- Implements animated transitions
-- Handles theme-specific styling
+### `HelpChatBubble.tsx`
+Help interface component.
+
+**Dependencies:**
+- `UserContext`
+- `ThemeContext`
+- `HelpChatPopout`
+
+**Used by:**
+- Global application layout
+
+**State Management:**
+- Controls visibility of chat popout
+
+### `HelpChatPopout.tsx`
+Interactive chat interface for customer support.
+
+**Dependencies:**
+- `UserContext` (for user profile)
+- `ThemeContext` (for styling)
+- `database.types` (for ticket and conversation types)
+- Supabase client
+
+**Used by:**
+- `HelpChatBubble` component
+
+**State Management:**
+- Manages ticket list and selection
+- Handles message history
+- Controls loading and error states
+- Manages chat input
+
+**API Interactions:**
+- Fetches user's tickets
+- Creates new support tickets
+- Manages ticket conversations
+- Retrieves organization information
+- Handles priority and status lookups
+- Real-time message updates
+
+**Features:**
+- Split view with ticket list and chat interface
+- Automatic ticket creation for new conversations
+- Organization-aware ticket management
+- Message history with user information
+- Real-time chat functionality
+- Power mode theme support
+
+**Database Tables Used:**
+- `tickets`
+- `ticket_conversations`
+- `organization_users`
+- `organizations`
+- `priorities`
+- `statuses`
+- `profiles`
+
+### `ConfigItemManager.tsx`
+Configuration management interface.
+
+**Dependencies:**
+- `database.types`
+- `UserContext`
+
+**Used by:**
+- `CreateTicketPopout`
+- `EditTicketPopout`
+- Admin configuration pages
+
+**API Interactions:**
+- Configuration item CRUD
+- Category management
+- Relationship mapping
 
 ## Component Relationships
 
@@ -134,50 +357,47 @@ Theme switching component.
        └── Page Content
    ```
 
-2. Context Usage:
-   - `ThemeContext`: Used by all components for styling
-   - `UserContext`: Used by Sidebar and ProfilePopout
+2. Ticket Management Flow:
+   ```
+   TicketTable
+   ├── CreateTicketPopout
+   │   ├── RichTextEditor
+   │   └── ConfigItemManager
+   └── EditTicketPopout
+       ├── RichTextEditor
+       └── ConfigItemManager
+   ```
 
-3. Router Integration:
-   - Sidebar handles route navigation
-   - ProfilePopout uses navigation for logout
-   - DashboardLayout provides route outlet
-
-## Styling Patterns
-
-1. Theme-Based Styling:
-   - All components implement power mode variations
-   - Consistent use of Tailwind classes
-   - Animation classes for power mode
-
-2. Layout Patterns:
-   - Fixed sidebar with main content margin
-   - Consistent padding and spacing
-   - Responsive design considerations
+3. Organization Management Flow:
+   ```
+   OrganizationTable
+   ├── CreateOrganizationPopout
+   └── EditOrganizationPopout
+   ```
 
 ## Important Notes
 
 1. Component Dependencies:
-   - Most components depend on theme context
-   - User-related components depend on user context
-   - Layout components handle responsive behavior
+   - Most components depend on UserContext for authentication
+   - UI components use ThemeContext for styling
+   - Complex forms use ConfigItemManager for configuration
 
 2. State Management:
    - Local state for UI interactions
-   - Context for global state (theme, user)
-   - Props for component configuration
+   - Context for global state
+   - Supabase for data persistence
 
 3. API Interactions:
-   - Profile updates handled through UserContext
-   - Authentication through Supabase client
-   - Error handling implemented for API calls
+   - Real-time updates where applicable
+   - Optimistic updates for better UX
+   - Error handling and retry logic
 
-4. Accessibility:
-   - Semantic HTML structure
-   - ARIA attributes where needed
-   - Keyboard navigation support
+4. Type Safety:
+   - Strict TypeScript usage
+   - Comprehensive prop typing
+   - Database type integration
 
 5. Performance:
-   - Components use React.memo where beneficial
-   - State updates are batched appropriately
-   - Animations optimized for performance 
+   - Lazy loading for modals
+   - Optimized re-renders
+   - Cached API responses 

@@ -1,0 +1,20 @@
+When a customer sends a message in the help chat (help agent)
+    1. The ticket is created in the database
+    2. The ticket is sent to the agent, a title is created (1 tool?)
+    3. The agent updates the description of the ticket, happens on creation or subseqent messages if appropriate (2 tools)
+    4. The agent can assign the ticket to an employee (3 tools)
+    5. The agent updates the status/priority of the ticket (4 tools)
+    6. The agent can add a comment to the ticket, updates customer and suggests an article (5 tools)
+    7. The agent can send a message to the ticket comments for employee (6 tools)
+    
+
+Knowledge base (not an agent)
+    1. When an article is created or updated, the document is chunked and embedded
+
+
+Analysis Agent (agent)
+    1. Admin can send a message to an analysis agent chat (1 component/table)
+    2. The agent looks at the admin message, and analyzes schema to generate a plain text query (1 tool)
+    3. The agent converts the plain text query to a sql query (2 tools)
+    4. The agent analyzes the returned data and generates a response (3 tools)
+    5. The agent responds to the admin

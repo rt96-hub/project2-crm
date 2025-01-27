@@ -57,10 +57,19 @@ This document outlines the structure and purpose of files in the frontend direct
 - `App.tsx`: Root React component
   - Defines main routing structure
   - Handles authentication flow
+  - Contains primary navigation and layout structure
 
 - `App.css` and `index.css`: Global styles
   - Contains Tailwind imports
   - Defines global CSS variables and base styles
+
+- `setupTests.ts`: Test configuration file
+  - Sets up testing environment
+  - Configures test utilities and mocks
+
+- `src_docs.md`: Detailed documentation for source code
+  - Contains in-depth documentation of components and utilities
+  - Documents code patterns and best practices
 
 #### Subdirectories
 
@@ -69,6 +78,7 @@ This document outlines the structure and purpose of files in the frontend direct
 - `components/`: Reusable React components
   - Contains shared UI components
   - Includes layout components like `DashboardLayout` and `Sidebar`
+  - Houses form components and UI elements
 
 - `context/`: React context providers
   - Contains `UserContext` for authentication state
@@ -77,14 +87,22 @@ This document outlines the structure and purpose of files in the frontend direct
 - `lib/`: Utility functions and service integrations
   - Contains Supabase client setup
   - Shared helper functions
+  - API integration utilities
 
 - `pages/`: Page components
   - Main route components like `Dashboard`, `Login`, and `Customers`
+  - Admin pages for system configuration
   - Each file corresponds to a main application route
+
+- `test-utils/`: Testing utilities and helpers
+  - Contains test setup and configuration
+  - Shared test utilities and mocks
+  - Testing helper functions
 
 - `types/`: TypeScript type definitions
   - Contains database types
   - Shared interface definitions
+  - Type utilities and helpers
 
 ### Public Directory (`public/`)
 
