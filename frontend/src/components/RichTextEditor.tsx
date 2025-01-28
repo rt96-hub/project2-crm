@@ -21,8 +21,8 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="border rounded-lg p-4 min-h-[300px]">
-      <div className="flex gap-2 mb-4">
+    <div className="flex flex-col h-full">
+      <div className="flex gap-2 mb-4 flex-shrink-0">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -39,7 +39,9 @@ export function RichTextEditor({
         </button>
         {/* Add more format buttons as needed */}
       </div>
-      <EditorContent editor={editor} />
+      <div className="flex-grow overflow-y-auto">
+        <EditorContent editor={editor} className="h-full" />
+      </div>
     </div>
   )
 } 
