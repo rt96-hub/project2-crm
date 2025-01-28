@@ -1,11 +1,18 @@
-When a customer sends a message in the help chat (help agent)
-    1. The ticket is created in the database
-    2. The ticket is sent to the agent, a title is created (1 tool?)
-    3. The agent updates the description of the ticket, happens on creation or subseqent messages if appropriate (2 tools)
-    4. The agent can assign the ticket to an employee (3 tools)
-    5. The agent updates the status/priority of the ticket (4 tools)
-    6. The agent can add a comment to the ticket, updates customer and suggests an article (5 tools)
-    7. The agent can send a message to the ticket comments for employee (6 tools)
+1. set up edge functions
+2. Basic AI response (? maybe not needed)
+3. Chunking and embedding help articles (need new table, not agent)
+4. Help agent
+
+Help Agent
+    1. customer sends a message in the help chat
+    2. The ticket is created in the database
+    3. The ticket is sent to the agent, a title is created (1 tool?)
+    4. The agent updates the description of the ticket, happens on creation or subseqent messages if appropriate (2 tools)
+    5. The agent can assign the ticket to an employee (3 tools)
+    6. The agent updates the status/priority of the ticket (4 tools)
+    7. The agent can add a comment to the ticket, updates customer and suggests an article (5 tools)
+    8. The agent can send a message to the ticket comments for employee (6 tools)
+    9. make sure that the activity log is updated
     
 
 Knowledge base (not an agent)

@@ -53,7 +53,8 @@ export function NewKnowledgeBaseArticle() {
     setError(null)
 
     try {
-      const { error: insertError } = await supabase
+      // First create the article
+      const { data: articleData, error: insertError } = await supabase
         .from('knowledge_base_articles')
         .insert({
           name,
@@ -62,8 +63,28 @@ export function NewKnowledgeBaseArticle() {
           category_id: categoryId,
           creator_id: profile.user_id
         })
+        .select()
+        .single()
 
       if (insertError) throw insertError
+
+      // Then process it with the edge function
+      const { error: functionError } = await supabase.functions.invoke(
+        'chunkEmbed',
+        {
+          body: JSON.stringify({
+            articleId: articleData.id,
+            articleText: content,
+            chunkSize: 1000,
+            overlap: 50
+          })
+        }
+      )
+
+      if (functionError) {
+        console.error('Error processing article chunks:', functionError)
+        // Continue with navigation even if chunking fails - we can retry later
+      }
 
       navigate('/knowledge-base')
     } catch (error) {

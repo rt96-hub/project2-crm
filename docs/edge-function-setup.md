@@ -5,8 +5,8 @@ Below is a task list and outline for configuring and deploying Supabase Edge Fun
 ## Checklist
 
 - [x] Install Supabase CLI  
-- [ ] Enable Edge Functions in your Supabase config  
-- [ ] Initialize your Edge Functions folder  
+- [x] Enable Edge Functions in your Supabase config  
+- [x] Initialize your Edge Functions folder  
 - [ ] Create the first Edge Function for chunking knowledge base articles  
 - [ ] Create the second Edge Function for confirming an OpenAI call  
 - [ ] Test functions locally  
@@ -17,14 +17,14 @@ Below is a task list and outline for configuring and deploying Supabase Edge Fun
 
 ## 1. Set Up and Enable Edge Functions
 
-- [ ] In your Supabase dashboard, ensure Edge Functions are enabled:
+- [x] In your Supabase dashboard, ensure Edge Functions are enabled:
   - Verify in your `supabase/config.toml` that `[edge_runtime] enabled = true`.
-- [ ] Make sure you install or update the Supabase CLI:
+- [x] Make sure you install or update the Supabase CLI:
   - macOS example:
     ```
     brew install supabase/tap/supabase
     ```
-- [ ] In your project root (where the `supabase/` folder resides), confirm or initialize:
+- [x] In your project root (where the `supabase/` folder resides), confirm or initialize:
   ```
   supabase init
   ```
@@ -33,8 +33,8 @@ Below is a task list and outline for configuring and deploying Supabase Edge Fun
 
 ## 2. Edge Functions Folders
 
-- [ ] By default, Supabase looks for Edge Functions in `./supabase/functions/`.
-- [ ] Create or confirm this directory exists.
+- [x] By default, Supabase looks for Edge Functions in `./supabase/functions/`.
+- [x] Create or confirm this directory exists.
 
 ---
 
@@ -42,12 +42,12 @@ Below is a task list and outline for configuring and deploying Supabase Edge Fun
 
 Below is a revised approach that not only chunks the knowledge base articles but also embeds the chunks and stores them in your Supabase instance. This requires the pgvector extension to be enabled and a corresponding table for storing vectors.
 
-- [ ] Enable pgvector in Supabase by running a migration or using the Supabase dashboard. For example:
+- [x] Enable pgvector in Supabase by running a migration or using the Supabase dashboard. For example:
   ```
   CREATE EXTENSION IF NOT EXISTS vector;
   ```
 
-- [ ] Create a table in your database to store vectors. For instance:
+- [x] Create a table in your database to store vectors. For instance:
   ```
   CREATE TABLE article_chunks (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -59,9 +59,9 @@ Below is a revised approach that not only chunks the knowledge base articles but
   );
   ```
 
-- [ ] Create a new Edge Function folder, for example: `./supabase/functions/chunkEmbed/`.
+- [x] Create a new Edge Function folder, for example: `./supabase/functions/chunkEmbed/`.
 
-- [ ] Add an `index.ts` file in that folder:
+- [x] Add an `index.ts` file in that folder:
 ```
 // index.ts (Edge Function for chunking, embedding, and storing articles)
 import { serve } from 'std/http/server'
