@@ -83,6 +83,24 @@ export function EditKnowledgeBaseArticle() {
 
       if (updateError) throw updateError
 
+      // Process article with the edge function to update embeddings
+      const { error: functionError } = await supabase.functions.invoke(
+        'chunkEmbed',
+        {
+          body: JSON.stringify({
+            articleId: id,
+            articleText: content,
+            chunkSize: 1000,
+            overlap: 50
+          })
+        }
+      )
+
+      if (functionError) {
+        console.error('Error processing article chunks:', functionError)
+        // Continue with navigation even if chunking fails - we can retry later
+      }
+
       navigate(`/knowledge-base/${id}`)
     } catch (error) {
       console.error('Error updating article:', error)

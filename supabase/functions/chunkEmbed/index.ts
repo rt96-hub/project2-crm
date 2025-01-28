@@ -42,6 +42,16 @@ serve(async (req) => {
     // Initialize supabase client (service role for insert operations)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+    // First, delete any existing chunks for this article
+    const { error: deleteError } = await supabase
+      .from('article_chunks')
+      .delete()
+      .eq('article_id', articleId)
+
+    if (deleteError) {
+      throw new Error(`Error deleting existing chunks: ${deleteError.message}`)
+    }
+
     // Chunk the article text
     const size = chunkSize || 1000
     const ovlp = overlap || 50
