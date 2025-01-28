@@ -90,7 +90,8 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
     setLoading(false);
   };
 
-  const getFullName = (profile: ProfileInfo) => {
+  const getFullName = (profile: ProfileInfo | null) => {
+    if (!profile) return 'MadAI';
     return [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown';
   };
 
@@ -201,6 +202,23 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
         if (ticket) {
           setUserTickets(prev => [ticket, ...prev]);
           setSelectedTicketId(ticket.id);
+          
+          // Get AI response for the new ticket
+          const { data: aiResponse } = await supabase.functions.invoke('aiConfirmation');
+          
+          if (aiResponse?.success && aiResponse.message?.kwargs?.content) {
+            // Add AI response to conversation
+            const aiConversationData: TablesInsert<'ticket_conversations'> = {
+              ticket_id: ticket.id,
+              profile_id: null,
+              text: aiResponse.message.kwargs.content,
+              from_ai: true
+            };
+
+            await supabase
+              .from('ticket_conversations')
+              .insert(aiConversationData);
+          }
         }
       } else {
         // Add message to existing ticket
@@ -217,6 +235,23 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
         if (conversationError) {
           setError('Failed to send message');
           return;
+        }
+
+        // Get AI response for the existing ticket
+        const { data: aiResponse } = await supabase.functions.invoke('aiConfirmation');
+        
+        if (aiResponse?.success && aiResponse.message?.kwargs?.content) {
+          // Add AI response to conversation
+          const aiConversationData: TablesInsert<'ticket_conversations'> = {
+            ticket_id: selectedTicketId,
+            profile_id: null,
+            text: aiResponse.message.kwargs.content,
+            from_ai: true
+          };
+
+          await supabase
+            .from('ticket_conversations')
+            .insert(aiConversationData);
         }
 
         // Refresh messages
@@ -246,7 +281,7 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
         'bg-white'
       }`}>
         {/* Sidebar with tickets */}
-        <div className={`w-1/3 border-r ${
+        <div className={`w-1/3 min-w-[250px] border-r ${
           isPowerMode ? 'border-hot-pink' : 'border-gray-200'
         } pr-4 overflow-y-auto`}>
           <h3 className={`text-lg font-bold mb-4 ${
@@ -259,13 +294,13 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
               <div
                 key={ticket.id}
                 onClick={() => setSelectedTicketId(ticket.id)}
-                className={`p-3 rounded cursor-pointer ${
+                className={`p-3 rounded cursor-pointer break-words ${
                   isPowerMode ?
                   'bg-hot-pink text-toxic-yellow hover:bg-pink-600' :
                   'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 } ${selectedTicketId === ticket.id ? 'ring-2 ring-offset-2 ' + (isPowerMode ? 'ring-toxic-yellow' : 'ring-blue-500') : ''}`}
               >
-                <div className="font-medium">{ticket.title || 'New Ticket'}</div>
+                <div className="font-medium break-words">{ticket.title || 'New Ticket'}</div>
                 <div className="text-sm truncate">
                   {ticket.description || 'No description'}
                 </div>
@@ -275,7 +310,7 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
         </div>
 
         {/* Chat area */}
-        <div className="flex-1 flex flex-col pl-4">
+        <div className="flex-1 flex flex-col pl-4 min-w-0">
           <h3 className={`text-lg font-bold mb-4 ${
             isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'
           }`}>
@@ -283,7 +318,7 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
           </h3>
 
           {/* Messages area */}
-          <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4">
+          <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4 pr-2">
             {loading ? (
               <div className={`text-center ${
                 isPowerMode ? 'text-toxic-yellow' : 'text-gray-500'
@@ -300,7 +335,9 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
               messages.map(message => (
                 <div
                   key={message.id}
-                  className={`mb-4 p-3 rounded-lg ${
+                  className={`mb-4 p-3 rounded-lg max-w-[85%] break-words ${
+                    message.from_ai ? 
+                    (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8') :
                     message.profile_id === profile?.user_id ?
                     (isPowerMode ? 'bg-hot-pink bg-opacity-20 ml-8' : 'bg-blue-50 ml-8') :
                     (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8')
@@ -309,9 +346,9 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
                   <div className={`font-semibold mb-1 ${
                     isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'
                   }`}>
-                    {getFullName(message.profile)}
+                    {getFullName(message.from_ai ? null : message.profile)}
                   </div>
-                  <div className={`whitespace-pre-wrap ${
+                  <div className={`whitespace-pre-wrap break-words ${
                     isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
                   }`}>
                     {message.text}
@@ -369,4 +406,4 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
     </div>,
     document.body
   );
-} 
+}

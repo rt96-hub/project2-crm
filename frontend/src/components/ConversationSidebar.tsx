@@ -86,8 +86,9 @@ export function ConversationSidebar({ isOpen, onClose, ticketId }: ConversationS
     }
   }
 
-  const getFullName = (profile: ProfileInfo) => {
-    return [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown'
+  const getFullName = (profile: ProfileInfo | null) => {
+    if (!profile) return 'MadAI';
+    return [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown';
   }
 
   if (!isOpen) return null
@@ -131,7 +132,9 @@ export function ConversationSidebar({ isOpen, onClose, ticketId }: ConversationS
           </div>
         ) : (
           messages.map((message) => (
-            <div key={message.id} className={`mb-4 p-3 rounded-lg ${
+            <div key={message.id} className={`mb-4 p-3 rounded-lg max-w-[85%] break-words ${
+              message.from_ai ? 
+              (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8') :
               message.profile_id === profile?.user_id ?
               (isPowerMode ? 'bg-hot-pink bg-opacity-20 ml-8' : 'bg-blue-50 ml-8') :
               (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8')
@@ -139,9 +142,9 @@ export function ConversationSidebar({ isOpen, onClose, ticketId }: ConversationS
               <div className={`font-semibold mb-1 ${
                 isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'
               }`}>
-                {getFullName(message.profile)}
+                {getFullName(message.from_ai ? null : message.profile)}
               </div>
-              <div className={`whitespace-pre-wrap ${
+              <div className={`whitespace-pre-wrap break-words ${
                 isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
               }`}>
                 {message.text}
@@ -207,4 +210,4 @@ export function ConversationSidebar({ isOpen, onClose, ticketId }: ConversationS
       </div>
     </div>
   )
-} 
+}

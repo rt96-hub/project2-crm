@@ -1,5 +1,19 @@
 # Supabase Edge Functions Documentation
 
+## Project Structure
+
+```
+functions/
+├── _shared/              # Shared utilities and configurations
+│   └── cors.ts          # CORS headers and configuration
+├── chunkEmbed/          # Knowledge base article chunking and embedding
+│   ├── index.ts         # Main function implementation
+│   ├── deno.json        # Deno configuration
+│   └── deno.lock        # Deno dependencies lock file
+├── .env                 # Local environment variables
+└── functions_docs.md    # This documentation
+```
+
 ## General Information
 
 ### Overview
@@ -7,7 +21,7 @@ Edge Functions in Supabase are server-side functions that run on the edge (close
 
 ### Environment Variables
 - Environment variables are managed in two places:
-  1. **Local Development**: Create a `.env` file in the project root with required variables
+  1. **Local Development**: Create a `.env` file in the `functions/` directory with required variables
   2. **Production**: Set variables in Supabase Dashboard under Settings > Edge Functions
   
 Required environment variables for our functions:
@@ -15,6 +29,40 @@ Required environment variables for our functions:
 OPENAI_API_KEY=your_api_key
 SUPABASE_URL=your_project_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+### CORS and Headers
+All functions should handle CORS properly. We use a shared CORS configuration:
+
+1. Import the shared CORS headers:
+```typescript
+import { corsHeaders } from '../_shared/cors.ts'
+```
+
+2. Handle CORS preflight requests in your function:
+```typescript
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  // Your function logic here...
+  return new Response(JSON.stringify(data), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  })
+})
+```
+
+### Required Imports
+Standard imports for edge functions:
+```typescript
+// HTTP server
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+// Supabase client
+import { createClient } from "@supabase/supabase-js"
+// CORS configuration
+import { corsHeaders } from '../_shared/cors.ts'
 ```
 
 ### Routing and Invocation
@@ -54,12 +102,13 @@ supabase functions deploy <function-name>
 ## Available Functions
 
 ### 1. chunkEmbed
-Chunks knowledge base articles into smaller pieces, generates embeddings using OpenAI, and stores them in the database for semantic search capabilities.
+Processes knowledge base articles by chunking them into smaller pieces, generating embeddings using OpenAI, and storing them in the database for semantic search capabilities.
 
-#### Requirements
-- OpenAI API Key
-- Supabase instance with pgvector extension enabled
-- `article_chunks` table (created via migration)
+#### Key Features
+- Deletes existing chunks before creating new ones (for article updates)
+- Configurable chunk size and overlap
+- Uses OpenAI's text-embedding-ada-002 model
+- Handles CORS for browser requests
 
 #### Input Payload
 ```typescript
@@ -80,44 +129,46 @@ interface ChunkEmbedResponse {
 }
 ```
 
-#### Example Usage (React/TypeScript)
+#### Example Usage (Frontend)
 ```typescript
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Creating a new article
+const { error: functionError } = await supabase.functions.invoke(
+  'chunkEmbed',
+  {
+    body: JSON.stringify({
+      articleId: articleData.id,
+      articleText: content,
+      chunkSize: 1000,
+      overlap: 50
+    })
+  }
 )
 
-async function processArticle(articleId: string, content: string) {
-  try {
-    const { data: functionData, error: functionError } = await supabase.functions.invoke(
-      'chunkEmbed',
-      {
-        body: JSON.stringify({
-          articleId,
-          articleText: content,
-          chunkSize: 1000,
-          overlap: 50
-        })
-      }
-    )
-
-    if (functionError) throw functionError
-    return functionData
-  } catch (error) {
-    console.error('Error processing article:', error)
-    throw error
+// Updating an existing article
+const { error: functionError } = await supabase.functions.invoke(
+  'chunkEmbed',
+  {
+    body: JSON.stringify({
+      articleId: id,
+      articleText: content,
+      chunkSize: 1000,
+      overlap: 50
+    })
   }
-}
+)
 ```
 
 #### Error Handling
 The function returns appropriate HTTP status codes:
 - 200: Success
-- 400: Bad Request (invalid input)
+- 400: Bad Request (invalid input or processing error)
 - 401: Unauthorized (missing/invalid credentials)
-- 500: Internal Server Error
+
+Common error scenarios:
+- Missing environment variables
+- Failed to delete existing chunks
+- Failed to generate embeddings
+- Failed to insert new chunks
 
 #### Rate Limiting
 - No specific rate limits are imposed by the function
@@ -132,6 +183,48 @@ The function returns appropriate HTTP status codes:
 ---
 
 ## Best Practices
+
+### Error Handling
+- Always wrap function calls in try-catch blocks
+- Log errors appropriately but don't expose sensitive details
+- Handle both function-specific and general errors
+- Provide meaningful error messages to users
+
+### CORS and Headers
+- Always include CORS headers in responses
+- Use the shared CORS configuration
+- Include proper Content-Type headers
+- Handle OPTIONS requests for preflight
+
+### Performance
+- Delete existing chunks before creating new ones
+- Use reasonable chunk sizes (default: 1000 characters)
+- Consider rate limiting for bulk operations
+- Monitor OpenAI API usage and costs
+
+### Security
+- Use environment variables for sensitive data
+- Never expose API keys in responses or logs
+- Use service role key only within edge functions
+- Validate input data before processing
+
+### Monitoring
+- Use Supabase Dashboard to monitor function execution
+- Monitor OpenAI API usage and costs
+- Set up error tracking and logging
+- Watch for failed chunk operations
+
+### Development Workflow
+1. Local Testing:
+   ```bash
+   supabase functions serve
+   ```
+2. Deployment:
+   ```bash
+   supabase functions deploy chunkEmbed
+   ```
+3. Verify in Supabase Dashboard
+4. Monitor logs for errors
 
 ### Error Handling
 - Always wrap function calls in try-catch blocks
