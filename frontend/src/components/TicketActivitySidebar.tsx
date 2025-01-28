@@ -13,7 +13,7 @@ interface TicketActivitySidebarProps {
 type ActivityItem = {
   id: string
   type: 'history' | 'comment'
-  actor_id: string
+  actor_id: string | null
   created_at: string
   content?: string
   action?: string
@@ -248,7 +248,7 @@ export function TicketActivitySidebar({ isOpen, onClose, ticketId }: TicketActiv
               <div className={`font-semibold mb-1 ${
                 isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'
               }`}>
-                {getFullName(activity.actor_id)}
+                {getFullName(activity.actor_id || '')}
               </div>
               {activity.type === 'comment' ? (
                 <div className={`whitespace-pre-wrap ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'}`}>
