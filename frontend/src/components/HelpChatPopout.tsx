@@ -8,6 +8,7 @@ import { Tables, TablesInsert } from '../types/database.types';
 interface HelpChatPopoutProps {
   isOpen: boolean;
   onClose: () => void;
+  ticketId?: string;
 }
 
 type ProfileInfo = {
@@ -16,7 +17,7 @@ type ProfileInfo = {
   last_name: string | null;
 }
 
-export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
+export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProps) {
   const { isPowerMode } = useTheme();
   const { profile } = useUser();
   const [messages, setMessages] = useState<(Tables<'ticket_conversations'> & { profile: ProfileInfo })[]>([]);
@@ -24,8 +25,15 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
   const [userTickets, setUserTickets] = useState<Tables<'tickets'>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(ticketId || null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Update selectedTicketId when ticketId prop changes
+  useEffect(() => {
+    if (ticketId) {
+      setSelectedTicketId(ticketId);
+    }
+  }, [ticketId]);
 
   // Fetch user's tickets
   useEffect(() => {
@@ -204,14 +212,24 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
           setSelectedTicketId(ticket.id);
           
           // Get AI response for the new ticket
-          const { data: aiResponse } = await supabase.functions.invoke('aiConfirmation');
+          const { data: aiResponse, error: aiError } = await supabase.functions.invoke('helpAgent', {
+            body: {
+              ticketId: ticket.id,
+              userMessage: newMessage
+            }
+          });
           
-          if (aiResponse?.success && aiResponse.message?.kwargs?.content) {
+          if (aiError) {
+            setError('Failed to get AI response');
+            return;
+          }
+
+          if (aiResponse?.output) {
             // Add AI response to conversation
             const aiConversationData: TablesInsert<'ticket_conversations'> = {
               ticket_id: ticket.id,
               profile_id: null,
-              text: aiResponse.message.kwargs.content,
+              text: aiResponse.output,
               from_ai: true
             };
 
@@ -238,14 +256,24 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
         }
 
         // Get AI response for the existing ticket
-        const { data: aiResponse } = await supabase.functions.invoke('aiConfirmation');
+        const { data: aiResponse, error: aiError } = await supabase.functions.invoke('helpAgent', {
+          body: {
+            ticketId: selectedTicketId,
+            userMessage: newMessage
+          }
+        });
         
-        if (aiResponse?.success && aiResponse.message?.kwargs?.content) {
+        if (aiError) {
+          setError('Failed to get AI response');
+          return;
+        }
+
+        if (aiResponse?.output) {
           // Add AI response to conversation
           const aiConversationData: TablesInsert<'ticket_conversations'> = {
             ticket_id: selectedTicketId,
             profile_id: null,
-            text: aiResponse.message.kwargs.content,
+            text: aiResponse.output,
             from_ai: true
           };
 
@@ -289,6 +317,23 @@ export function HelpChatPopout({ isOpen, onClose }: HelpChatPopoutProps) {
           }`}>
             Your Tickets
           </h3>
+          <button
+            onClick={() => {
+              // Only create new conversation if we're not already in one
+              if (selectedTicketId !== null || messages.length > 0) {
+                setSelectedTicketId(null);
+                setMessages([]);
+              }
+            }}
+            className={`w-full mb-4 px-4 py-2 rounded ${
+              isPowerMode ?
+              'bg-hot-pink text-toxic-yellow hover:bg-pink-600 disabled:opacity-50' :
+              'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+            } ${(!selectedTicketId && messages.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!selectedTicketId && messages.length === 0}
+          >
+            New Conversation
+          </button>
           <div className="space-y-2">
             {userTickets.map(ticket => (
               <div

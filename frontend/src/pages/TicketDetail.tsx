@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { TicketActivitySidebar } from '../components/TicketActivitySidebar'
 import { ConversationSidebar } from '../components/ConversationSidebar'
+import { HelpChatPopout } from '../components/HelpChatPopout'
 import { EditTicketPopout } from '../components/EditTicketPopout'
 import { useUser } from '../context/UserContext'
 
@@ -39,6 +40,7 @@ export function TicketDetail() {
   const [isConversationSidebarOpen, setIsConversationSidebarOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [organization, setOrganization] = useState<Tables<'organizations'> | null>(null)
+  const [isHelpChatOpen, setIsHelpChatOpen] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -191,7 +193,7 @@ export function TicketDetail() {
               </>
             )}
             <button
-              onClick={() => setIsConversationSidebarOpen(true)}
+              onClick={() => profile?.is_customer ? setIsHelpChatOpen(true) : setIsConversationSidebarOpen(true)}
               className={`px-4 py-2 rounded-lg transition-all ${
                 isPowerMode ?
                 'bg-hot-pink text-toxic-yellow hover:bg-pink-600 font-comic' :
@@ -214,7 +216,7 @@ export function TicketDetail() {
         }
       >
         <div className={`h-full flex flex-col space-y-4 ${isPowerMode ? 'font-comic' : ''} ${
-          isActivitySidebarOpen || isConversationSidebarOpen ? 'mr-96' : ''
+          isActivitySidebarOpen || (isConversationSidebarOpen && !profile?.is_customer) ? 'mr-96' : ''
         }`}>
           {/* Status Row */}
           <div className={`grid grid-cols-4 gap-4 ${
@@ -352,11 +354,19 @@ export function TicketDetail() {
         ticketId={ticket.id}
       />
 
-      <ConversationSidebar
-        isOpen={isConversationSidebarOpen}
-        onClose={() => setIsConversationSidebarOpen(false)}
-        ticketId={ticket.id}
-      />
+      {profile?.is_customer ? (
+        <HelpChatPopout
+          isOpen={isHelpChatOpen}
+          onClose={() => setIsHelpChatOpen(false)}
+          ticketId={ticket.id}
+        />
+      ) : (
+        <ConversationSidebar
+          isOpen={isConversationSidebarOpen}
+          onClose={() => setIsConversationSidebarOpen(false)}
+          ticketId={ticket.id}
+        />
+      )}
 
       {ticket && (
         <EditTicketPopout

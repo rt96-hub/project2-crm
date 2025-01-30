@@ -3,17 +3,36 @@
 3. Chunking and embedding help articles (need new table, not agent)
 4. Help agent
 
+NEED TO REWRITE THE HELP AGENT IN LANGGRAPH
+
+
+curl -X POST http://localhost:54321/functions/v1/helpAgent -H "Content-Type: application/json" -d '{"ticketId": "test-123", "userMessage": "test message"}'
+
 Help Agent
     1. customer sends a message in the help chat
-    2. The ticket is created in the database
-    3. The ticket is sent to the agent, a title is created (1 tool?)
-    4. The agent updates the description of the ticket, happens on creation or subseqent messages if appropriate (2 tools)
-    5. The agent can assign the ticket to an employee (3 tools)
-    6. The agent updates the status/priority of the ticket (4 tools)
-    7. The agent can add a comment to the ticket, updates customer and suggests an article (5 tools)
-    8. The agent can send a message to the ticket comments for employee (6 tools)
-    9. make sure that the activity log is updated
-    
+    2. The ticket is created in the database (happens in app)
+    3. If the ticket has a placeholder title, the agent recognizes it and creates a title (tool 1)
+    4. The agent updates the description of the ticket, happens on creation or subseqent messages if appropriate (tool 2)
+    5. The agent determines if a new employee needs to be assigned (either no employee, or the user asks for someone else to be assigned) (tool 3)
+    6. The agent determines if the status/priority of the ticket needs to be updated (tool 4)
+    7. The agent can send a message to the ticket comments for employee (tool 5)
+    8. The agent sends a message back to the customer, tells them what they have done and suggests an article (tool 6)
+    9. make sure that the activity log is updated for any of these tool calls
+
+TODO HELP AGENT
+    - make sure final response is recorded in langsmith
+    - modify the ticket creation to name the ticket "new ticket", maybe make sure agent always updates the name if it is "new ticket"
+    - check on double sending of messages (only one message should go to the ticket_conversations table)
+        - I think it is because the agent uses a tool (respondToCustomer) to send a message to the ticket_conversations for replying to the customer
+        - remove the respondToCustomer tool, refactor main prompt to make sure the final output is formatted like the client response message
+        - then also the response itself from the final agent output is sent to the ticket conversation table
+    - make sure it only sends an appropriate response to the customer
+    - make it pull the ticket_history table to get any relevant updates
+    - make sure it knows that it should always send an update in the ticket_comments table to the internal team
+    - get it to properly format the ticket updates
+        - might have to totally refactor the ticket_history table
+        - at least get the ticket activity panel to show the name as AI
+    - use rag to find knowledge base articles    
 
 Knowledge base (not an agent)
     1. When an article is created or updated, the document is chunked and embedded

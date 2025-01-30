@@ -1,0 +1,15 @@
+{
+    "imports": {
+      "std/": "https://deno.land/std@0.168.0/",
+      "@langchain/core": "npm:@langchain/core",
+      "@langchain/core/callbacks/promises": "npm:@langchain/core/callbacks/promises",
+      "@langchain/openai": "npm:@langchain/openai",
+      "@supabase/supabase-js": "npm:@supabase/supabase-js",
+      "langchain/agents": "npm:langchain/agents",
+      "@langchain/core/messages": "npm:@langchain/core/messages",
+      "@langchain/core/tools": "npm:@langchain/core/tools",
+      "zod": "npm:zod",
+      "@langchain/langgraph": "npm:@langchain/langgraph",
+      "@langchain/core/messages/tool": "npm:@langchain/core/messages/tool"
+    }
+  }
