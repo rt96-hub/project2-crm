@@ -21,7 +21,8 @@ Help Agent
 
 TODO HELP AGENT
     - make sure final response is recorded in langsmith
-    - modify the ticket creation to name the ticket "new ticket", maybe make sure agent always updates the name if it is "new ticket"
+    x modify the ticket creation to name the ticket "new ticket", maybe make sure agent always updates the name if it is "new ticket"
+        x also make sure the description is null when created
     - check on double sending of messages (only one message should go to the ticket_conversations table)
         - I think it is because the agent uses a tool (respondToCustomer) to send a message to the ticket_conversations for replying to the customer
         - remove the respondToCustomer tool, refactor main prompt to make sure the final output is formatted like the client response message

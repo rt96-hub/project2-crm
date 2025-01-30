@@ -158,8 +158,8 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
     dueDate.setDate(dueDate.getDate() + 7); // 1 week from now
 
     const ticketData: TablesInsert<'tickets'> = {
-      title: "Placeholder help chat",
-      description: 'AI will generate a description based on the conversation',
+      title: "New Ticket",
+      description: null,
       status_id: statusData.id,
       priority_id: priorityId,
       due_date: dueDate.toISOString(),
