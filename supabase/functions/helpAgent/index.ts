@@ -3,6 +3,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 // LangGraph and LangChain imports
 import { ChatOpenAI } from "@langchain/openai";
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import {
@@ -22,6 +23,18 @@ const supabase = createClient(
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
+// Initialize OpenAI embeddings
+const embeddings = new OpenAIEmbeddings({
+  openAIApiKey: Deno.env.get('OPENAI_API_KEY')!,
+  modelName: "text-embedding-ada-002"
+});
+
+// Function to get embeddings for a text query
+async function getQueryEmbedding(text: string): Promise<string> {
+  const embeddingArray = await embeddings.embedQuery(text);
+  // Convert to pgvector format
+  return '[' + embeddingArray.join(',') + ']';
+}
 
 /**
  * 1) Define your chat model
@@ -227,28 +240,64 @@ const getPriorityOptions = tool(
   }
 );
 
+// Add this interface before the searchKnowledgeBase tool
+interface ArticleSearchResult {
+  article_id: string;
+  article_name: string;
+  article_body: string;
+  chunk_text: string;
+  similarity: number;
+}
+
 const searchKnowledgeBase = tool(
   async ({ 
     search_query
   }: { 
     search_query: string;
   }) => {
-    const { data, error } = await supabase
-      .from('knowledge_base_articles')
-      .select('id, name, body, is_public')
-      .eq('is_active', true)
-      .or(`name.ilike.%${search_query}%,body.ilike.%${search_query}%`)
-      .eq('is_public', true)
-      .limit(5);
+    try {
+      // Get embeddings for the search query
+      const queryEmbedding = await getQueryEmbedding(search_query);
 
-    if (error) throw error;
-    if (!data || data.length === 0) return "No relevant articles found";
+      // Search for similar articles using vector similarity
+      const { data, error } = await supabase
+        .rpc('search_article_chunks', {
+          query_embedding: queryEmbedding,
+          similarity_threshold: 0.7, // Base threshold for possible relevance
+          max_results: 5
+        });
 
-    return JSON.stringify(data);
+      if (error) throw error;
+      if (!data || data.length === 0) return "No relevant knowledge base articles found for this query.";
+
+      // Format and categorize results by relevance
+      const formattedResults = (data as ArticleSearchResult[]).map(result => ({
+        id: result.article_id,
+        name: result.article_name,
+        body: result.article_body,
+        relevant_chunk: result.chunk_text,
+        similarity_score: result.similarity,
+        relevance: result.similarity >= 0.85 ? 'highly_relevant' : 'possibly_relevant'
+      }));
+
+      // Sort by similarity score to show most relevant first
+      formattedResults.sort((a, b) => b.similarity_score - a.similarity_score);
+
+      // Group results by relevance for clearer presentation
+      const groupedResults = {
+        highly_relevant: formattedResults.filter(r => r.relevance === 'highly_relevant'),
+        possibly_relevant: formattedResults.filter(r => r.relevance === 'possibly_relevant')
+      };
+
+      return JSON.stringify(groupedResults);
+    } catch (error) {
+      console.error('Error searching knowledge base:', error);
+      return "Error searching knowledge base articles";
+    }
   },
   {
     name: "searchKnowledgeBase",
-    description: "Search for relevant public knowledge base articles",
+    description: "Search for relevant public knowledge base articles using semantic similarity. Returns both highly relevant (similarity > 0.85) and possibly relevant (similarity > 0.7) articles, clearly marked.",
     schema: z.object({
       search_query: z.string().describe("The search term or topic to find articles about")
     })
@@ -769,7 +818,9 @@ serve(async (req: Request) => {
     const response = await agent.invoke([
       { 
         type: "human", 
-        content: `For ticket ${ticketId}, here is the customer message: ${userMessage}
+        content: `You are MadAI, a helpful customer support agent. You are an expert at managing tickets and helping customers, while responding in natural, silly, friendly language.
+        
+For ticket ${ticketId}, here is the customer message: ${userMessage}
 
 Please help with this ticket by:
 1. Getting the ticket details, including the ticket history

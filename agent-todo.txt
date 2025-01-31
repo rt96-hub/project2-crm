@@ -34,14 +34,14 @@ TODO HELP AGENT
     x get it to properly format the ticket updates
         x might have to totally refactor the ticket_history table
         x at least get the ticket activity panel to show the name as AI
-    - use rag to find knowledge base articles
-        - rag to find the articleId
-        - use the articleId to get the article from the database
-        - tell the user the article title
+    x use rag to find knowledge base articles
+        x rag to find the articleId
+        x use the articleId to get the article from the database
+        x tell the user the article title
     x some kind of loading indicator in the help chat
         x clear the text area, but don't clear the messages
         x when the agent is done, and you get the response, show it in the message area
-    - format response to customer to be more natural
+    x format response to customer to be more natural
 
 Knowledge base (not an agent)
     1. When an article is created or updated, the document is chunked and embedded
