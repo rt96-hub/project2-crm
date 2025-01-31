@@ -140,7 +140,7 @@ const findLeastLoadedEmployee = tool(
         employee: leastLoadedEmployee,
         ticketCount: ticketCountMap.get(leastLoadedEmployee.user_id) || 0
       });
-    } catch (error) {
+    } catch (_error) {
       return JSON.stringify({
         found: false,
         message: "Error finding least loaded employee"
@@ -255,11 +255,157 @@ const searchKnowledgeBase = tool(
   }
 );
 
+// Add these interfaces before the getTicketHistory tool
+interface ProfileData {
+  first_name: string | null;
+  last_name: string | null;
+}
+
+interface HistoryEntry {
+  id: string;
+  created_at: string;
+  action: string;
+  changes: {
+    title?: string;
+    description?: string;
+    content?: string;
+    profile_id?: string;
+    status_id?: string;
+    priority_id?: string;
+  };
+  from_ai: boolean;
+  actor_id: string | null;
+  profiles: ProfileData | null;
+}
+
+interface CommentEntry {
+  id: string;
+  created_at: string;
+  content: string;
+  from_ai: boolean;
+  author_id: string | null;
+  profiles: ProfileData | null;
+}
+
+interface ConversationEntry {
+  id: string;
+  created_at: string;
+  text: string;
+  from_ai: boolean;
+  profile_id: string | null;
+  profiles: ProfileData | null;
+}
+
+// Add before the interfaces
+type PostgrestError = {
+  message: string;
+  details: string;
+  hint: string;
+  code: string;
+};
+
+const getTicketHistory = tool(
+  async ({ ticket_id }: { ticket_id: string }) => {
+    // Get ticket history entries
+    const { data: historyData, error: historyError } = await supabase
+      .from('ticket_history')
+      .select(`
+        id,
+        created_at,
+        action,
+        changes,
+        from_ai,
+        actor_id,
+        profiles:actor_id (
+          first_name,
+          last_name
+        )
+      `)
+      .eq('ticket_id', ticket_id)
+      .order('created_at') as { data: HistoryEntry[] | null, error: PostgrestError | null };
+
+    if (historyError) throw historyError;
+
+    // Get ticket comments
+    const { data: commentsData, error: commentsError } = await supabase
+      .from('ticket_comments')
+      .select(`
+        id,
+        created_at,
+        content,
+        from_ai,
+        author_id,
+        profiles:author_id (
+          first_name,
+          last_name
+        )
+      `)
+      .eq('ticket_id', ticket_id)
+      .order('created_at') as { data: CommentEntry[] | null, error: PostgrestError | null };
+
+    if (commentsError) throw commentsError;
+
+    // Get ticket conversations
+    const { data: conversationsData, error: conversationsError } = await supabase
+      .from('ticket_conversations')
+      .select(`
+        id,
+        created_at,
+        text,
+        from_ai,
+        profile_id,
+        profiles:profile_id (
+          first_name,
+          last_name
+        )
+      `)
+      .eq('ticket_id', ticket_id)
+      .order('created_at') as { data: ConversationEntry[] | null, error: PostgrestError | null };
+
+    if (conversationsError) throw conversationsError;
+
+    // Combine and format all entries
+    const combinedHistory = [
+      ...(historyData?.map(entry => ({
+        type: 'history',
+        date: entry.created_at,
+        content: JSON.stringify(entry.changes),
+        actor: entry.from_ai ? 'AI Agent' : 
+          entry.profiles ? `${entry.profiles.first_name} ${entry.profiles.last_name}`.trim() : 'Unknown User',
+        action: entry.action
+      })) || []),
+      ...(commentsData?.map(entry => ({
+        type: 'comment',
+        date: entry.created_at,
+        content: entry.content,
+        actor: entry.from_ai ? 'AI Agent' : 
+          entry.profiles ? `${entry.profiles.first_name} ${entry.profiles.last_name}`.trim() : 'Unknown User'
+      })) || []),
+      ...(conversationsData?.map(entry => ({
+        type: 'conversation',
+        date: entry.created_at,
+        content: entry.text,
+        actor: entry.from_ai ? 'AI Agent' : 
+          entry.profiles ? `${entry.profiles.first_name} ${entry.profiles.last_name}`.trim() : 'Unknown User'
+      })) || [])
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    return JSON.stringify(combinedHistory);
+  },
+  {
+    name: "getTicketHistory",
+    description: "Get the complete history of a ticket including comments, conversations, and changes",
+    schema: z.object({
+      ticket_id: z.string().describe("The ID of the ticket to get history for")
+    })
+  }
+);
+
 // Help Agent Tools
 
 const updateTicketTitle = tool(
   async ({ ticket_id, title }: { ticket_id: string; title: string }) => {
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('tickets')
       .update({ title })
       .eq('id', ticket_id)
@@ -289,7 +435,7 @@ const updateTicketTitle = tool(
 
 const updateTicketDescription = tool(
   async ({ ticket_id, description }: { ticket_id: string; description: string }) => {
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('tickets')
       .update({ description })
       .eq('id', ticket_id)
@@ -360,11 +506,12 @@ const assignEmployee = tool(
 
 const updateTicketStatus = tool(
   async ({ ticket_id, status_id, priority_id }: { ticket_id: string; status_id?: string; priority_id?: string }) => {
-    const updates: any = {};
+    const updates: { status_id?: string; priority_id?: string } = {};
     if (status_id) updates.status_id = status_id;
     if (priority_id) updates.priority_id = priority_id;
 
-    const { data, error } = await supabase
+    console.log("updates", updates);
+    const { data: _data, error } = await supabase
       .from('tickets')
       .update(updates)
       .eq('id', ticket_id)
@@ -394,7 +541,7 @@ const updateTicketStatus = tool(
 
 const addInternalComment = tool(
   async ({ ticket_id, content }: { ticket_id: string; content: string }) => {
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('ticket_comments')
       .insert({
         ticket_id,
@@ -425,40 +572,40 @@ const addInternalComment = tool(
   }
 );
 
-const respondToCustomer = tool(
-  async ({ 
-    ticket_id, 
-    message, 
-    suggested_article_id 
-  }: { 
-    ticket_id: string; 
-    message: string; 
-    suggested_article_id?: string 
-  }) => {
-    // Add the response to ticket conversations
-    const { error: convError } = await supabase
-      .from('ticket_conversations')
-      .insert({
-        ticket_id,
-        text: message,
-        from_ai: true
-      });
+// const respondToCustomer = tool(
+//   async ({ 
+//     ticket_id, 
+//     message, 
+//     suggested_article_id 
+//   }: { 
+//     ticket_id: string; 
+//     message: string; 
+//     suggested_article_id?: string 
+//   }) => {
+//     // Add the response to ticket conversations
+//     const { error: convError } = await supabase
+//       .from('ticket_conversations')
+//       .insert({
+//         ticket_id,
+//         text: message,
+//         from_ai: true
+//       });
 
-    if (convError) throw convError;
+//     if (convError) throw convError;
 
 
-    return `Sent response to customer${suggested_article_id ? ' with article suggestion' : ''}`;
-  },
-  {
-    name: "respondToCustomer",
-    description: "Send a response to the customer and optionally suggest a knowledge base article",
-    schema: z.object({
-      ticket_id: z.string().describe("The ID of the ticket"),
-      message: z.string().describe("The message to send to the customer"),
-      suggested_article_id: z.string().optional().describe("ID of a knowledge base article to suggest")
-    })
-  }
-);
+//     return `Sent response to customer${suggested_article_id ? ' with article suggestion' : ''}`;
+//   },
+//   {
+//     name: "respondToCustomer",
+//     description: "Send a response to the customer and optionally suggest a knowledge base article",
+//     schema: z.object({
+//       ticket_id: z.string().describe("The ID of the ticket"),
+//       message: z.string().describe("The message to send to the customer"),
+//       suggested_article_id: z.string().optional().describe("ID of a knowledge base article to suggest")
+//     })
+//   }
+// );
 
 // Collect tools in an array
 const tools = [
@@ -469,13 +616,14 @@ const tools = [
   getStatusOptions,
   getPriorityOptions,
   searchKnowledgeBase,
+  getTicketHistory,
   // Action tools
   updateTicketTitle,
   updateTicketDescription,
   assignEmployee,
   updateTicketStatus,
   addInternalComment,
-  respondToCustomer
+  // respondToCustomer
 ];
 
 /**
@@ -565,10 +713,11 @@ serve(async (req: Request) => {
         content: `For ticket ${ticketId}, here is the customer message: ${userMessage}
 
 Please help with this ticket by:
-1. Getting the ticket details
+1. Getting the ticket details, including the ticket history
 2. Understanding the context
 3. Taking appropriate actions (updating title/description if needed, setting priority/status, etc.)
-4. Responding helpfully to the customer
+4. Reporting the ticket activity internally with the addInternalComment tool, add relevant information to what changes you have made and why you made them
+5. Write a response to the customer, with a natural tone, no need to mention every technical change you made to the ticket, include any relevant Knowledge Base articles
 `
       }
     ]);

@@ -27,6 +27,7 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
   const [error, setError] = useState<string | null>(null);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(ticketId || null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const [isWaitingForAgent, setIsWaitingForAgent] = useState(false);
 
   // Update selectedTicketId when ticketId prop changes
   useEffect(() => {
@@ -200,22 +201,42 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !profile) return;
 
+    const messageToSend = newMessage;
+    setNewMessage(''); // Clear input immediately
     setLoading(true);
+    setIsWaitingForAgent(true);
     setError(null);
 
     try {
       if (!selectedTicketId) {
         // Create a new ticket if no ticket is selected
-        const ticket = await createNewTicket(newMessage);
+        const ticket = await createNewTicket(messageToSend);
         if (ticket) {
+          // Update tickets list immediately
           setUserTickets(prev => [ticket, ...prev]);
           setSelectedTicketId(ticket.id);
+          
+          // Add user message to UI immediately
+          const userMessage = {
+            id: Date.now().toString(),
+            ticket_id: ticket.id,
+            profile_id: profile.user_id,
+            text: messageToSend,
+            created_at: new Date().toISOString(),
+            from_ai: false,
+            profile: {
+              user_id: profile.user_id,
+              first_name: profile.first_name,
+              last_name: profile.last_name
+            }
+          };
+          setMessages([userMessage]);
           
           // Get AI response for the new ticket
           const { data: aiResponse, error: aiError } = await supabase.functions.invoke('helpAgent', {
             body: {
               ticketId: ticket.id,
-              userMessage: newMessage
+              userMessage: messageToSend
             }
           });
           
@@ -233,17 +254,57 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
               from_ai: true
             };
 
-            await supabase
+            const { data: savedAiMessage } = await supabase
               .from('ticket_conversations')
-              .insert(aiConversationData);
+              .insert(aiConversationData)
+              .select()
+              .single();
+
+            if (savedAiMessage) {
+              // Add AI message to UI immediately
+              setMessages(prev => [...prev, {
+                ...savedAiMessage,
+                profile: null,
+                from_ai: true
+              }]);
+            }
+          }
+
+          // Refresh ticket data to get updated title/description
+          const { data: updatedTicket } = await supabase
+            .from('tickets')
+            .select('*')
+            .eq('id', ticket.id)
+            .single();
+
+          if (updatedTicket) {
+            setUserTickets(prev => prev.map(t => 
+              t.id === updatedTicket.id ? updatedTicket : t
+            ));
           }
         }
       } else {
+        // Add user message to UI immediately
+        const userMessage = {
+          id: Date.now().toString(),
+          ticket_id: selectedTicketId,
+          profile_id: profile.user_id,
+          text: messageToSend,
+          created_at: new Date().toISOString(),
+          from_ai: false,
+          profile: {
+            user_id: profile.user_id,
+            first_name: profile.first_name,
+            last_name: profile.last_name
+          }
+        };
+        setMessages(prev => [...prev, userMessage]);
+
         // Add message to existing ticket
         const conversationData: TablesInsert<'ticket_conversations'> = {
           ticket_id: selectedTicketId,
           profile_id: profile.user_id,
-          text: newMessage,
+          text: messageToSend,
         };
 
         const { error: conversationError } = await supabase
@@ -259,7 +320,7 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
         const { data: aiResponse, error: aiError } = await supabase.functions.invoke('helpAgent', {
           body: {
             ticketId: selectedTicketId,
-            userMessage: newMessage
+            userMessage: messageToSend
           }
         });
         
@@ -277,20 +338,41 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
             from_ai: true
           };
 
-          await supabase
+          const { data: savedAiMessage } = await supabase
             .from('ticket_conversations')
-            .insert(aiConversationData);
+            .insert(aiConversationData)
+            .select()
+            .single();
+
+          if (savedAiMessage) {
+            // Add AI message to UI immediately
+            setMessages(prev => [...prev, {
+              ...savedAiMessage,
+              profile: null,
+              from_ai: true
+            }]);
+          }
         }
 
-        // Refresh messages
-        await fetchMessages(selectedTicketId);
+        // Refresh ticket data to get updated title/description
+        const { data: updatedTicket } = await supabase
+          .from('tickets')
+          .select('*')
+          .eq('id', selectedTicketId)
+          .single();
+
+        if (updatedTicket) {
+          setUserTickets(prev => prev.map(t => 
+            t.id === updatedTicket.id ? updatedTicket : t
+          ));
+        }
       }
-      setNewMessage('');
     } catch (err) {
       setError('Failed to send message');
       console.error(err);
     } finally {
       setLoading(false);
+      setIsWaitingForAgent(false);
     }
   };
 
@@ -364,7 +446,7 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
 
           {/* Messages area */}
           <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4 pr-2">
-            {loading ? (
+            {loading && messages.length === 0 ? (
               <div className={`text-center ${
                 isPowerMode ? 'text-toxic-yellow' : 'text-gray-500'
               }`}>
@@ -377,34 +459,45 @@ export function HelpChatPopout({ isOpen, onClose, ticketId }: HelpChatPopoutProp
                 {selectedTicketId ? 'No messages yet' : 'Start a new conversation'}
               </div>
             ) : (
-              messages.map(message => (
-                <div
-                  key={message.id}
-                  className={`mb-4 p-3 rounded-lg max-w-[85%] break-words ${
-                    message.from_ai ? 
-                    (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8') :
-                    message.profile_id === profile?.user_id ?
-                    (isPowerMode ? 'bg-hot-pink bg-opacity-20 ml-8' : 'bg-blue-50 ml-8') :
-                    (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8')
-                  }`}
-                >
-                  <div className={`font-semibold mb-1 ${
-                    isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'
-                  }`}>
-                    {getFullName(message.from_ai ? null : message.profile)}
+              <>
+                {messages.map(message => (
+                  <div
+                    key={message.id}
+                    className={`mb-4 p-3 rounded-lg max-w-[85%] break-words ${
+                      message.from_ai ? 
+                      (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8') :
+                      message.profile_id === profile?.user_id ?
+                      (isPowerMode ? 'bg-hot-pink bg-opacity-20 ml-8' : 'bg-blue-50 ml-8') :
+                      (isPowerMode ? 'bg-electric-purple bg-opacity-20 mr-8' : 'bg-gray-50 mr-8')
+                    }`}
+                  >
+                    <div className={`font-semibold mb-1 ${
+                      isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'
+                    }`}>
+                      {getFullName(message.from_ai ? null : message.profile)}
+                    </div>
+                    <div className={`whitespace-pre-wrap break-words ${
+                      isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
+                    }`}>
+                      {message.text}
+                    </div>
+                    <div className={`text-sm mt-1 ${
+                      isPowerMode ? 'text-hot-pink' : 'text-gray-500'
+                    }`}>
+                      {new Date(message.created_at).toLocaleString()}
+                    </div>
                   </div>
-                  <div className={`whitespace-pre-wrap break-words ${
-                    isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'
+                ))}
+                {isWaitingForAgent && (
+                  <div className={`text-center py-2 ${
+                    isPowerMode ? 'text-toxic-yellow' : 'text-gray-500'
                   }`}>
-                    {message.text}
+                    <span className="inline-block animate-bounce mr-1">•</span>
+                    <span className="inline-block animate-bounce mr-1" style={{ animationDelay: '0.2s' }}>•</span>
+                    <span className="inline-block animate-bounce" style={{ animationDelay: '0.4s' }}>•</span>
                   </div>
-                  <div className={`text-sm mt-1 ${
-                    isPowerMode ? 'text-hot-pink' : 'text-gray-500'
-                  }`}>
-                    {new Date(message.created_at).toLocaleString()}
-                  </div>
-                </div>
-              ))
+                )}
+              </>
             )}
           </div>
 

@@ -23,17 +23,26 @@ TODO HELP AGENT
     - make sure final response is recorded in langsmith
     x modify the ticket creation to name the ticket "new ticket", maybe make sure agent always updates the name if it is "new ticket"
         x also make sure the description is null when created
-    - check on double sending of messages (only one message should go to the ticket_conversations table)
-        - I think it is because the agent uses a tool (respondToCustomer) to send a message to the ticket_conversations for replying to the customer
-        - remove the respondToCustomer tool, refactor main prompt to make sure the final output is formatted like the client response message
-        - then also the response itself from the final agent output is sent to the ticket conversation table
-    - make sure it only sends an appropriate response to the customer
-    - make it pull the ticket_history table to get any relevant updates
-    - make sure it knows that it should always send an update in the ticket_comments table to the internal team
+    x check on double sending of messages (only one message should go to the ticket_conversations table)
+        x I think it is because the agent uses a tool (respondToCustomer) to send a message to the ticket_conversations for replying to the customer
+        x remove the respondToCustomer tool, refactor main prompt to make sure the final output is formatted like the client response message
+        x then also the response itself from the final agent output is sent to the ticket conversation table
+    x make sure it only sends an appropriate response to the customer
+    x make it pull the ticket_history table to get any relevant updates
+    x make sure it knows that it should always send an update in the ticket_comments table to the internal team
     - get it to properly format the ticket updates
         - might have to totally refactor the ticket_history table
         - at least get the ticket activity panel to show the name as AI
-    - use rag to find knowledge base articles    
+    - use rag to find knowledge base articles
+        - rag to find the articleId
+        - use the articleId to get the article from the database
+        - tell the user the article title
+    x some kind of loading indicator in the help chat
+        x clear the text area, but don't clear the messages
+        x when the agent is done, and you get the response, show it in the message area
+    - format response to customer to be more natural
+    - ensure output gets recorded in langsmith
+        - it only shows the tools, not the final output
 
 Knowledge base (not an agent)
     1. When an article is created or updated, the document is chunked and embedded
