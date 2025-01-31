@@ -21,6 +21,7 @@ Help Agent
 
 TODO HELP AGENT
     - make sure final response is recorded in langsmith
+        - only shows tools, not the final output
     x modify the ticket creation to name the ticket "new ticket", maybe make sure agent always updates the name if it is "new ticket"
         x also make sure the description is null when created
     x check on double sending of messages (only one message should go to the ticket_conversations table)
@@ -30,9 +31,9 @@ TODO HELP AGENT
     x make sure it only sends an appropriate response to the customer
     x make it pull the ticket_history table to get any relevant updates
     x make sure it knows that it should always send an update in the ticket_comments table to the internal team
-    - get it to properly format the ticket updates
-        - might have to totally refactor the ticket_history table
-        - at least get the ticket activity panel to show the name as AI
+    x get it to properly format the ticket updates
+        x might have to totally refactor the ticket_history table
+        x at least get the ticket activity panel to show the name as AI
     - use rag to find knowledge base articles
         - rag to find the articleId
         - use the articleId to get the article from the database
@@ -41,8 +42,6 @@ TODO HELP AGENT
         x clear the text area, but don't clear the messages
         x when the agent is done, and you get the response, show it in the message area
     - format response to customer to be more natural
-    - ensure output gets recorded in langsmith
-        - it only shows the tools, not the final output
 
 Knowledge base (not an agent)
     1. When an article is created or updated, the document is chunked and embedded

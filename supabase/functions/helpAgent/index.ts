@@ -405,6 +405,15 @@ const getTicketHistory = tool(
 
 const updateTicketTitle = tool(
   async ({ ticket_id, title }: { ticket_id: string; title: string }) => {
+    // Get current title first
+    const { data: currentTicket, error: fetchError } = await supabase
+      .from('tickets')
+      .select('title')
+      .eq('id', ticket_id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const { data: _data, error } = await supabase
       .from('tickets')
       .update({ title })
@@ -413,11 +422,16 @@ const updateTicketTitle = tool(
 
     if (error) throw error;
 
-    // Log the activity
+    // Log the activity with proper from/to format
     await supabase.from('ticket_history').insert({
       ticket_id,
-      action: 'update_title',
-      changes: { title },
+      action: 'update',
+      changes: {
+        title: {
+          from: currentTicket.title,
+          to: title
+        }
+      },
       from_ai: true
     });
 
@@ -435,6 +449,15 @@ const updateTicketTitle = tool(
 
 const updateTicketDescription = tool(
   async ({ ticket_id, description }: { ticket_id: string; description: string }) => {
+    // Get current description first
+    const { data: currentTicket, error: fetchError } = await supabase
+      .from('tickets')
+      .select('description')
+      .eq('id', ticket_id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const { data: _data, error } = await supabase
       .from('tickets')
       .update({ description })
@@ -445,8 +468,13 @@ const updateTicketDescription = tool(
 
     await supabase.from('ticket_history').insert({
       ticket_id,
-      action: 'update_description',
-      changes: { description },
+      action: 'update',
+      changes: {
+        description: {
+          from: currentTicket.description,
+          to: description
+        }
+      },
       from_ai: true
     });
 
@@ -467,7 +495,7 @@ const assignEmployee = tool(
     // First check if there's an existing assignment
     const { data: existingAssignment } = await supabase
       .from('ticket_assignments')
-      .select()
+      .select('profile_id')
       .eq('ticket_id', ticket_id)
       .single();
 
@@ -487,8 +515,13 @@ const assignEmployee = tool(
 
     await supabase.from('ticket_history').insert({
       ticket_id,
-      action: 'assign_employee',
-      changes: { profile_id },
+      action: 'update',
+      changes: {
+        assignees: {
+          removed: existingAssignment ? [existingAssignment.profile_id] : [],
+          added: [profile_id]
+        }
+      },
       from_ai: true
     });
 
@@ -504,13 +537,31 @@ const assignEmployee = tool(
   }
 );
 
+interface TicketChange {
+  from: string | null;
+  to: string | null;
+}
+
+interface TicketChanges {
+  status_id?: TicketChange;
+  priority_id?: TicketChange;
+}
+
 const updateTicketStatus = tool(
   async ({ ticket_id, status_id, priority_id }: { ticket_id: string; status_id?: string; priority_id?: string }) => {
+    // Get current status and priority first
+    const { data: currentTicket, error: fetchError } = await supabase
+      .from('tickets')
+      .select('status_id, priority_id')
+      .eq('id', ticket_id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const updates: { status_id?: string; priority_id?: string } = {};
     if (status_id) updates.status_id = status_id;
     if (priority_id) updates.priority_id = priority_id;
 
-    console.log("updates", updates);
     const { data: _data, error } = await supabase
       .from('tickets')
       .update(updates)
@@ -519,10 +570,24 @@ const updateTicketStatus = tool(
 
     if (error) throw error;
 
+    const changes: TicketChanges = {};
+    if (status_id) {
+      changes.status_id = {
+        from: currentTicket.status_id,
+        to: status_id
+      };
+    }
+    if (priority_id) {
+      changes.priority_id = {
+        from: currentTicket.priority_id,
+        to: priority_id
+      };
+    }
+
     await supabase.from('ticket_history').insert({
       ticket_id,
-      action: 'update_status',
-      changes: updates,
+      action: 'update',
+      changes,
       from_ai: true
     });
 
@@ -553,12 +618,6 @@ const addInternalComment = tool(
 
     if (error) throw error;
 
-    await supabase.from('ticket_history').insert({
-      ticket_id,
-      action: 'add_internal_comment',
-      changes: { content },
-      from_ai: true
-    });
 
     return `Added internal comment to ticket`;
   },

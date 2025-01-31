@@ -18,6 +18,7 @@ type ActivityItem = {
   content?: string
   action?: string
   changes?: any
+  from_ai?: boolean
 }
 
 type ProfileInfo = {
@@ -103,23 +104,29 @@ export function TicketActivitySidebar({ isOpen, onClose, ticketId }: TicketActiv
         type: 'comment' as const,
         actor_id: c.author_id,
         created_at: c.created_at,
-        content: c.content
+        content: c.content,
+        from_ai: c.from_ai
       }))
     ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
     // Fetch profiles for all actors
-    const actorIds = [...new Set(allActivities.map(a => a.actor_id))]
+    const actorIds = [...new Set(allActivities.map(a => a.actor_id).filter(id => id !== null))]
+    console.log('Actor IDs to fetch:', actorIds)
     if (actorIds.length > 0) {
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('user_id, first_name, last_name')
         .in('user_id', actorIds)
+
+      console.log('Profile data:', profileData)
+      console.log('Profile error:', profileError)
 
       if (profileData) {
         const profileMap = profileData.reduce((acc, profile) => ({
           ...acc,
           [profile.user_id]: profile
         }), {} as Record<string, ProfileInfo>)
+        console.log('Profile map:', profileMap)
         setProfiles(profileMap)
       }
     }
@@ -153,7 +160,9 @@ export function TicketActivitySidebar({ isOpen, onClose, ticketId }: TicketActiv
     }
   }
 
-  const getFullName = (userId: string) => {
+  const getFullName = (userId: string | null, fromAi?: boolean) => {
+    if (fromAi && !userId) return 'MadAI'
+    if (!userId) return 'Unknown'
     const profile = profiles[userId]
     if (!profile) return 'Unknown'
     return [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown'
@@ -248,7 +257,7 @@ export function TicketActivitySidebar({ isOpen, onClose, ticketId }: TicketActiv
               <div className={`font-semibold mb-1 ${
                 isPowerMode ? 'text-toxic-yellow' : 'text-gray-900'
               }`}>
-                {getFullName(activity.actor_id || '')}
+                {getFullName(activity.actor_id, activity.from_ai)}
               </div>
               {activity.type === 'comment' ? (
                 <div className={`whitespace-pre-wrap ${isPowerMode ? 'text-toxic-yellow' : 'text-gray-700'}`}>
