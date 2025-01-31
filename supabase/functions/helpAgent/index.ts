@@ -17,6 +17,7 @@ import {
   task,
 } from "@langchain/langgraph";
 import { createClient } from "@supabase/supabase-js";
+import { awaitAllCallbacks } from "@langchain/core/callbacks/promises";
 
 const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -42,7 +43,7 @@ async function getQueryEmbedding(text: string): Promise<string> {
  * Using ChatOpenAI from LangChain for convenience. ([1](https://js.langchain.com/docs/modules/agents/agent_types/react))
  */
 const model = new ChatOpenAI({
-  model: "gpt-4o",
+  model: "gpt-4o-mini",
 });
 
 /**
@@ -244,7 +245,6 @@ const getPriorityOptions = tool(
 interface ArticleSearchResult {
   article_id: string;
   article_name: string;
-  article_body: string;
   chunk_text: string;
   similarity: number;
 }
@@ -264,7 +264,7 @@ const searchKnowledgeBase = tool(
         .rpc('search_article_chunks', {
           query_embedding: queryEmbedding,
           similarity_threshold: 0.7, // Base threshold for possible relevance
-          max_results: 5
+          max_results: 3
         });
 
       if (error) throw error;
@@ -274,7 +274,6 @@ const searchKnowledgeBase = tool(
       const formattedResults = (data as ArticleSearchResult[]).map(result => ({
         id: result.article_id,
         name: result.article_name,
-        body: result.article_body,
         relevant_chunk: result.chunk_text,
         similarity_score: result.similarity,
         relevance: result.similarity >= 0.85 ? 'highly_relevant' : 'possibly_relevant'
@@ -598,49 +597,101 @@ interface TicketChanges {
 
 const updateTicketStatus = tool(
   async ({ ticket_id, status_id, priority_id }: { ticket_id: string; status_id?: string; priority_id?: string }) => {
-    // Get current status and priority first
-    const { data: currentTicket, error: fetchError } = await supabase
-      .from('tickets')
-      .select('status_id, priority_id')
-      .eq('id', ticket_id)
-      .single();
+    try {
+      // Get current status and priority first
+      const { data: currentTicket, error: fetchError } = await supabase
+        .from('tickets')
+        .select('status_id, priority_id')
+        .eq('id', ticket_id)
+        .single();
 
-    if (fetchError) throw fetchError;
+      if (fetchError) throw fetchError;
 
-    const updates: { status_id?: string; priority_id?: string } = {};
-    if (status_id) updates.status_id = status_id;
-    if (priority_id) updates.priority_id = priority_id;
+      // Validate status_id if provided
+      if (status_id) {
+        const { data: statusData } = await supabase
+          .from('statuses')
+          .select('id')
+          .eq('id', status_id)
+          .eq('is_active', true)
+          .single();
 
-    const { data: _data, error } = await supabase
-      .from('tickets')
-      .update(updates)
-      .eq('id', ticket_id)
-      .select();
+        if (!statusData) {
+          return `Invalid or inactive status ID provided: ${status_id}. Status not updated.`;
+        }
+      }
 
-    if (error) throw error;
+      // Validate priority_id if provided
+      if (priority_id) {
+        const { data: priorityData } = await supabase
+          .from('priorities')
+          .select('id')
+          .eq('id', priority_id)
+          .eq('is_active', true)
+          .single();
 
-    const changes: TicketChanges = {};
-    if (status_id) {
-      changes.status_id = {
-        from: currentTicket.status_id,
-        to: status_id
-      };
+        if (!priorityData) {
+          return `Invalid or inactive priority ID provided: ${priority_id}. Priority not updated.`;
+        }
+      }
+
+      const updates: { status_id?: string; priority_id?: string } = {};
+      let updatesApplied = false;
+
+      if (status_id && status_id !== currentTicket.status_id) {
+        updates.status_id = status_id;
+        updatesApplied = true;
+      }
+      if (priority_id && priority_id !== currentTicket.priority_id) {
+        updates.priority_id = priority_id;
+        updatesApplied = true;
+      }
+
+      // Only proceed with update if there are actual changes
+      if (!updatesApplied) {
+        return "No changes needed - provided values match current values or were invalid";
+      }
+
+      const { error } = await supabase
+        .from('tickets')
+        .update(updates)
+        .eq('id', ticket_id);
+
+      if (error) throw error;
+
+      const changes: TicketChanges = {};
+      if (updates.status_id) {
+        changes.status_id = {
+          from: currentTicket.status_id,
+          to: updates.status_id
+        };
+      }
+      if (updates.priority_id) {
+        changes.priority_id = {
+          from: currentTicket.priority_id,
+          to: updates.priority_id
+        };
+      }
+
+      await supabase.from('ticket_history').insert({
+        ticket_id,
+        action: 'update',
+        changes,
+        from_ai: true
+      });
+
+      const updatedFields = [];
+      if (updates.status_id) updatedFields.push('status');
+      if (updates.priority_id) updatedFields.push('priority');
+      
+      return `Successfully updated ticket ${updatedFields.join(' and ')}`;
+    } catch (error: unknown) {
+      console.error('Error updating ticket status/priority:', error);
+      if (error instanceof Error) {
+        return `Error updating ticket: ${error.message}. Please try again or check the values provided.`;
+      }
+      return 'An unknown error occurred while updating the ticket.';
     }
-    if (priority_id) {
-      changes.priority_id = {
-        from: currentTicket.priority_id,
-        to: priority_id
-      };
-    }
-
-    await supabase.from('ticket_history').insert({
-      ticket_id,
-      action: 'update',
-      changes,
-      from_ai: true
-    });
-
-    return `Updated ticket status/priority`;
   },
   {
     name: "updateTicketStatus",
@@ -780,7 +831,11 @@ const agent = entrypoint("agent", async (messages: BaseMessageLike[]) => {
   while (true) {
     // If the model calls any tools, process them
     if (!llmResponse.tool_calls || llmResponse.tool_calls.length === 0) {
-      break;
+      // When there are no more tool calls, mark this as the final response
+      return {
+        messages: [llmResponse],
+        type: "end"
+      };
     }
     const toolResults = [];
     for (const tCall of llmResponse.tool_calls) {
@@ -791,9 +846,11 @@ const agent = entrypoint("agent", async (messages: BaseMessageLike[]) => {
     currentMessages = addMessages(currentMessages, [llmResponse, ...toolResults]);
     llmResponse = await callModel(currentMessages);
   }
-  // Return the final AI response after no more tool calls
-  return llmResponse;
 });
+
+// Configure callbacks for serverless environment
+// NOTE: Set LANGCHAIN_CALLBACKS_BACKGROUND=false in your Supabase Edge Function environment variables
+// Do not try to set it programmatically as Deno.env.set is not supported in Edge Functions
 
 /**
  * 5) Serve an HTTP request using Deno on Supabase Edge Functions.
@@ -823,22 +880,40 @@ serve(async (req: Request) => {
 For ticket ${ticketId}, here is the customer message: ${userMessage}
 
 Please help with this ticket by:
-1. Getting the ticket details, including the ticket history
-2. Understanding the context
-3. Taking appropriate actions (updating title/description if needed, setting priority/status, etc.)
-4. Reporting the ticket activity internally with the addInternalComment tool, add relevant information to what changes you have made and why you made them
-5. Write a response to the customer, with a natural tone, no need to mention every technical change you made to the ticket, include any relevant Knowledge Base articles
+1. Getting the ticket details/history, relevant employee details, and status/priority options, ind relevant KB articles
+2. Make necessary updates (title, description, status, priority, assignment) then add internal notes about important information
+3. Your final response is going directly to the customer, and it will:
+   - Acknowledges their issue
+   - Mentions any relevant KB articles
+   - Does NOT list technical changes ("I updated X")
+   - Uses emojis and friendly tone
+   - Ends with next steps
+4. THE ONLY THING YOU SHOULD RETURN IS THE RESPONSE YOU ARE GOING TO SEND TO THE CUSTOMER
+
+Example good response:
+"Hey there! 👋 I've got your back on the widget issue! Robert will be reaching out shortly to help. In the meantime, check out our guide on widget maintenance: [link]. Let me know if you need anything else! 🛠️✨"
 `
       }
     ]);
 
+    // Make sure all callbacks finish before returning
+    await awaitAllCallbacks();
+
+    // Extract the final message content from the response
+    const finalMessage = response.messages[response.messages.length - 1];
+    const output = finalMessage.content;
+
     return new Response(JSON.stringify({
-      output: response.content,
+      output,
+      status: "completed"
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (err) {
+    // Make sure callbacks finish even on error
+    await awaitAllCallbacks();
+    
     const error = err as Error;
     console.error("Error details:", {
       name: error.name,

@@ -20,8 +20,8 @@ Help Agent
     9. make sure that the activity log is updated for any of these tool calls
 
 TODO HELP AGENT
-    - make sure final response is recorded in langsmith
-        - only shows tools, not the final output
+    x make sure final response is recorded in langsmith
+        x only shows tools, not the final output
     x modify the ticket creation to name the ticket "new ticket", maybe make sure agent always updates the name if it is "new ticket"
         x also make sure the description is null when created
     x check on double sending of messages (only one message should go to the ticket_conversations table)
@@ -42,6 +42,14 @@ TODO HELP AGENT
         x clear the text area, but don't clear the messages
         x when the agent is done, and you get the response, show it in the message area
     x format response to customer to be more natural
+    - speed up the agent
+    - maybe need to change the way the agent reads the user message
+
+Testing results
+    - Tokens
+    - latency
+    - correct actions
+brainlift
 
 Knowledge base (not an agent)
     1. When an article is created or updated, the document is chunked and embedded

@@ -7,7 +7,6 @@ CREATE OR REPLACE FUNCTION search_article_chunks(
 RETURNS TABLE (
     article_id uuid,
     article_name text,
-    article_body text,
     chunk_text text,
     similarity float
 )
@@ -18,7 +17,6 @@ BEGIN
     SELECT DISTINCT ON (ka.id)
         ka.id as article_id,
         ka.name as article_name,
-        ka.body as article_body,
         ac.chunk_text,
         1 - (ac.embedding <=> query_embedding) as similarity
     FROM
